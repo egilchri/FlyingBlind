@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111418">
+  <meta name="description" content="Speaks the readings from a Bluetooth laser distance meter.">
+  <title>FlyingBlind</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>FlyingBlind</h1>
+      <p id="status" role="status" class="status" data-state="disconnected">Not connected</p>
+    </header>
+
+    <section class="source" aria-label="Device">
+      <label for="source">Source</label>
+      <select id="source"></select>
+      <div id="explorer-options" hidden>
+        <label for="extra-uuids">Extra service UUIDs (comma separated)</label>
+        <input id="extra-uuids" type="text" autocomplete="off" spellcheck="false"
+               placeholder="e.g. 0000abcd-0000-1000-8000-00805f9b34fb">
+      </div>
+      <button id="connect" class="primary">Connect</button>
+    </section>
+
+    <button id="reading" class="reading" aria-describedby="reading-hint">
+      <span id="reading-value">—</span>
+    </button>
+    <p id="reading-hint" class="hint">Tap the reading to hear it again.</p>
+
+    <section class="controls" aria-label="Measuring">
+      <button id="measure" disabled>Measure</button>
+      <label id="auto-wrap" class="toggle" hidden>
+        <input id="auto" type="checkbox"> Stream readings every 3 seconds
+      </label>
+    </section>
+
+    <details class="panel">
+      <summary>Settings</summary>
+      <div class="settings">
+        <label for="units">Units</label>
+        <select id="units">
+          <option value="metric">Meters</option>
+          <option value="feet">Feet and inches</option>
+          <option value="inches">Inches</option>
+        </select>
+
+        <label for="precision" data-for="metric">Decimal places</label>
+        <select id="precision" data-for="metric">
+          <option value="0">0 (2 m)</option>
+          <option value="1">1 (2.3 m)</option>
+          <option value="2">2 (2.35 m)</option>
+          <option value="3">3 (2.348 m)</option>
+        </select>
+
+        <label for="fraction" data-for="imperial">Round inches to</label>
+        <select id="fraction" data-for="imperial">
+          <option value="1">Whole inch</option>
+          <option value="2">½ inch</option>
+          <option value="4">¼ inch</option>
+          <option value="8">⅛ inch</option>
+          <option value="16">1/16 inch</option>
+        </select>
+
+        <label for="rate">Speech rate <output id="rate-out" for="rate"></output></label>
+        <input id="rate" type="range" min="0.5" max="2.5" step="0.1">
+
+        <label for="voice">Voice</label>
+        <select id="voice"><option value="">Default</option></select>
+
+        <label for="speak-mode">Speak</label>
+        <select id="speak-mode">
+          <option value="every">Every reading</option>
+          <option value="change">Only when the reading changes</option>
+        </select>
+
+        <label for="output">Spoken by</label>
+        <select id="output">
+          <option value="tts">This app's voice</option>
+          <option value="aria">Screen reader (TalkBack)</option>
+        </select>
+
+        <button id="test-voice">Test voice</button>
+      </div>
+    </details>
+
+    <details class="panel">
+      <summary>Log</summary>
+      <button id="clear-log" class="small">Clear</button>
+      <pre id="log" aria-live="off"></pre>
+    </details>
+
+    <!-- Readings are announced here when "Spoken by: Screen reader" is chosen. -->
+    <div id="announce" class="visually-hidden" aria-live="assertive" aria-atomic="true"></div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
