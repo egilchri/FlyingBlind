@@ -12,10 +12,12 @@
 import { BleDriver, toHex } from './driver.js';
 import { DISTO_SERVICE } from './leica-disto.js';
 import { GLM_SERVICE } from './bosch-glm.js';
+import { LIDAR_SERVICE } from './esp32-lidar.js';
 
 const COMMON_SERVICES = [
   DISTO_SERVICE,
   GLM_SERVICE,
+  LIDAR_SERVICE,
   'battery_service',
   'device_information',
   '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART, used by many cheap meters

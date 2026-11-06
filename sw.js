@@ -1,6 +1,6 @@
 // Offline support: cache the app shell so the app opens without a network.
 // Bump VERSION if you add or rename files.
-const VERSION = 'flyingblind-v2';
+const VERSION = 'flyingblind-v3';
 
 const FILES = [
   './',
@@ -16,6 +16,7 @@ const FILES = [
   'devices/leica-disto.js',
   'devices/bosch-glm.js',
   'devices/generic-ble.js',
+  'devices/esp32-lidar.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',
@@ -38,7 +39,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) return;
   event.respondWith(
-    fetch(event.request)
+    // no-cache: always check with the server, so the browser's HTTP cache can't serve stale code.
+    fetch(event.request.url, { cache: 'no-cache' })
       .then((res) => {
         if (res.ok) {
           const copy = res.clone();

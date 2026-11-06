@@ -1,7 +1,9 @@
 // Base class for every measurement source (simulator or real device).
 //
 // Events (listen with driver.addEventListener):
-//   'measurement'  detail: { meters: number }
+//   'measurement'  detail: { meters: number, streamed: boolean }
+//                  meters is Infinity when the device sees no target.
+//                  streamed = part of a fast continuous stream (not spoken in speech mode).
 //   'status'       detail: { state: 'disconnected'|'connecting'|'connected'|'error', message: string }
 //   'log'          detail: { message: string }   (debug output, shown in the log panel)
 
@@ -16,8 +18,8 @@ export class Driver extends EventTarget {
   async disconnect() {}
   async triggerMeasure() {}
 
-  emitMeasurement(meters) {
-    this.dispatchEvent(new CustomEvent('measurement', { detail: { meters } }));
+  emitMeasurement(meters, { streamed = false } = {}) {
+    this.dispatchEvent(new CustomEvent('measurement', { detail: { meters, streamed } }));
   }
 
   setStatus(state, message = '') {

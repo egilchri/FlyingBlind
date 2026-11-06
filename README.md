@@ -46,6 +46,7 @@ Web Bluetooth needs HTTPS or `localhost`.
 | Simulator | Works now |
 | Leica DISTO (BLE) | Written from community protocol notes. Not yet tested on hardware |
 | Bosch GLM C-series (BLE) | Written from community reverse engineering. Not yet tested on hardware |
+| ESP32 LiDAR (BLE) | Sketch: driver + firmware in `firmware/lidar-ble/`. Not yet tested on hardware |
 | BLE explorer | Connects to any device, lists services, logs raw notifications (see the Log panel) |
 
 Adding a meter = one file in `devices/` extending `BleDriver` (`requestOptions()` + `setup()`),
@@ -66,7 +67,25 @@ press. Over Bluetooth they usually send only finished measurements, so even in t
 modes expect around 1 to 3 readings a second at best, which is too slow for a smooth tone while
 waving the meter. For true real-time scanning, a small time-of-flight LiDAR sensor (for example
 TF-Luna or TFmini-S, 100+ readings a second, about 8 to 12 m range) on an ESP32 board that sends
-readings over BLE would work well. It would need one more driver file in `devices/`.
+readings over BLE would work well.
+
+A first version of this is in the repo:
+
+- `firmware/lidar-ble/lidar-ble.ino`: an Arduino sketch for the ESP32. It reads the sensor over
+  UART and sends about 50 readings a second over BLE, as the device "FBLidar". The wiring is in
+  the file header.
+- `devices/esp32-lidar.js`: the matching source, listed as **ESP32 LiDAR** in the app.
+
+Parts: an ESP32 dev board, a TF-Luna (or TFmini-S), four jumper wires and a USB power bank.
+To flash it: Arduino IDE → Boards Manager → install "esp32" by Espressif → open the sketch → pick
+your board → Upload. The Serial Monitor (115200 baud) should show `FBLidar advertising`.
+
+When nothing is in range, or the return is too weak, the device sends "no target" and the tone goes
+silent. In speech mode the stream is shown on screen but only spoken when you press **Measure**. The
+log shows the actual reading rate every 5 seconds, so you can check the Bluetooth link is keeping up.
+
+Note: the sensor's beam is infrared and invisible, and it is wider than a laser meter's dot (about
+2° for the TF-Luna), so it reads the nearest large surface rather than a pinpoint.
 
 ## Tests
 

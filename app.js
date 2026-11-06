@@ -6,11 +6,13 @@ import { SimulatorDriver } from './devices/simulator.js';
 import { LeicaDistoDriver } from './devices/leica-disto.js';
 import { BoschGlmDriver } from './devices/bosch-glm.js';
 import { GenericBleDriver } from './devices/generic-ble.js';
+import { Esp32LidarDriver } from './devices/esp32-lidar.js';
 
 const DRIVERS = {
   simulator: SimulatorDriver,
   disto: LeicaDistoDriver,
   glm: BoschGlmDriver,
+  lidar: Esp32LidarDriver,
   explorer: GenericBleDriver,
 };
 
@@ -126,13 +128,22 @@ function showReading(meters) {
   return speech;
 }
 
-function onMeasurement(meters) {
+function onMeasurement(meters, streamed) {
+  if (!Number.isFinite(meters)) {
+    // The device sees nothing (out of range or too weak a return).
+    ui.readingValue.textContent = '—';
+    if (toneMode()) tone.silence();
+    else if (!streamed) say('No target');
+    return;
+  }
   lastMeters = meters;
   const speech = showReading(meters);
   if (toneMode()) {
     tone.update(meters);
     return;
   }
+  // A fast stream would talk over itself; speak it only when Measure is pressed.
+  if (streamed) return;
   if (settings.speakMode === 'change' && speech === lastSpoken) return;
   lastSpoken = speech;
   say(speech);
@@ -194,7 +205,7 @@ function refreshControls() {
 
 function makeDriver() {
   const d = new DRIVERS[settings.source]();
-  d.addEventListener('measurement', (e) => onMeasurement(e.detail.meters));
+  d.addEventListener('measurement', (e) => onMeasurement(e.detail.meters, e.detail.streamed));
   d.addEventListener('log', (e) => log(e.detail.message));
   d.addEventListener('status', (e) => {
     const { state, message } = e.detail;

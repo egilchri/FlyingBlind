@@ -90,7 +90,7 @@ export class SimulatorDriver extends Driver {
   scanOnce() {
     if (this.state !== 'connected') return;
     const meters = Math.round(roomDistance(this.scanAngle()) * 1000) / 1000;
-    this.emitMeasurement(meters);
+    this.emitMeasurement(meters, { streamed: true });
   }
 
   setAuto(on, mode = 'slow') {
