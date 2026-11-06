@@ -1,6 +1,7 @@
 import { formatDistance } from './format.js';
 import { speak, listVoices, speechSupported } from './speech.js';
 import { TonePlayer } from './tone.js';
+import { VERSION } from './version.js';
 import { bluetoothSupported } from './devices/driver.js';
 import { SimulatorDriver } from './devices/simulator.js';
 import { LeicaDistoDriver } from './devices/leica-disto.js';
@@ -47,6 +48,7 @@ const ui = {
   log: $('log'),
   clearLog: $('clear-log'),
   announce: $('announce'),
+  version: $('version'),
 };
 
 // ---------- settings (remembered on this phone) ----------
@@ -284,6 +286,8 @@ function bindSetting(el, key, { number = false, after } = {}) {
 }
 
 function init() {
+  ui.version.textContent = `v${VERSION}`;
+  log(`FlyingBlind version ${VERSION}`);
   populateSources();
   populateVoices();
 
@@ -330,7 +334,7 @@ function init() {
   if (!bluetoothSupported) log('Web Bluetooth not available here. Only the simulator will work.');
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch((e) => log(`Offline support unavailable: ${e.message}`));
+    navigator.serviceWorker.register('sw.js', { type: 'module' }).catch((e) => log(`Offline support unavailable: ${e.message}`));
   }
 }
 

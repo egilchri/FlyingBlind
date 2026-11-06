@@ -1,6 +1,8 @@
 // Offline support: cache the app shell so the app opens without a network.
-// Bump VERSION if you add or rename files.
-const VERSION = 'flyingblind-v3';
+// Bump VERSION in version.js on every release (and add any new files below).
+// Registered as a module worker so it can share version.js with the page.
+import { VERSION as APP_VERSION } from './version.js';
+const VERSION = `flyingblind-v${APP_VERSION}`;
 
 const FILES = [
   './',
@@ -10,6 +12,7 @@ const FILES = [
   'format.js',
   'speech.js',
   'pitch.js',
+  'version.js',
   'tone.js',
   'devices/driver.js',
   'devices/simulator.js',
