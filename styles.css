@@ -103,6 +103,8 @@ button.small { min-height: 40px; width: auto; padding: 6px 14px; font-size: 0.9r
 
 .settings { display: flex; flex-direction: column; gap: 6px; }
 .settings select, .settings input[type="range"] { margin-bottom: 10px; }
+.settings-heading { font-size: 1.1rem; margin: 18px 0 4px; padding-top: 14px; border-top: 2px solid var(--border); }
+.controls label[for="feedback"] { margin-bottom: -6px; }
 input[type="range"] { width: 100%; min-height: 40px; accent-color: var(--accent); }
 
 #log {

@@ -1,6 +1,6 @@
 // Offline support: cache the app shell so the app opens without a network.
 // Bump VERSION if you add or rename files.
-const VERSION = 'flyingblind-v1';
+const VERSION = 'flyingblind-v2';
 
 const FILES = [
   './',
@@ -9,6 +9,8 @@ const FILES = [
   'app.js',
   'format.js',
   'speech.js',
+  'pitch.js',
+  'tone.js',
   'devices/driver.js',
   'devices/simulator.js',
   'devices/leica-disto.js',

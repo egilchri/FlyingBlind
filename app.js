@@ -1,5 +1,6 @@
 import { formatDistance } from './format.js';
 import { speak, listVoices, speechSupported } from './speech.js';
+import { TonePlayer } from './tone.js';
 import { bluetoothSupported } from './devices/driver.js';
 import { SimulatorDriver } from './devices/simulator.js';
 import { LeicaDistoDriver } from './devices/leica-disto.js';
@@ -25,6 +26,13 @@ const ui = {
   measure: $('measure'),
   autoWrap: $('auto-wrap'),
   auto: $('auto'),
+  autoLabel: $('auto-label'),
+  feedback: $('feedback'),
+  toneRange: $('tone-range'),
+  toneDirection: $('tone-direction'),
+  toneVolume: $('tone-volume'),
+  toneVolumeOut: $('tone-volume-out'),
+  testTone: $('test-tone'),
   units: $('units'),
   precision: $('precision'),
   fraction: $('fraction'),
@@ -52,6 +60,10 @@ const DEFAULTS = {
   speakMode: 'every',
   output: 'tts',
   extraUuids: '',
+  feedback: 'speech',
+  toneRange: 5,
+  toneDirection: 'high',
+  toneVolume: 0.3,
 };
 
 function loadSettings() {
@@ -74,6 +86,17 @@ const settings = loadSettings();
 
 // ---------- output ----------
 
+const tone = new TonePlayer();
+
+function applyToneSettings() {
+  tone.maxMeters = Number(settings.toneRange);
+  tone.closeHigh = settings.toneDirection === 'high';
+  tone.setVolume(Number(settings.toneVolume));
+  ui.toneVolumeOut.textContent = `${Math.round(settings.toneVolume * 100)}%`;
+}
+
+const toneMode = () => settings.feedback === 'tone';
+
 let lastMeters = null;
 let lastSpoken = '';
 
@@ -94,13 +117,22 @@ function formatSettings() {
 function showReading(meters) {
   const { display, speech } = formatDistance(meters, formatSettings());
   ui.readingValue.textContent = display;
-  ui.reading.setAttribute('aria-label', `Last reading ${speech}. Tap to repeat.`);
+  // In tone mode readings arrive many times a second. Leave the label alone so
+  // a screen reader focused on this button doesn't try to read every one.
+  ui.reading.setAttribute(
+    'aria-label',
+    toneMode() ? 'Distance. Tap to hear it.' : `Last reading ${speech}. Tap to repeat.`
+  );
   return speech;
 }
 
 function onMeasurement(meters) {
   lastMeters = meters;
   const speech = showReading(meters);
+  if (toneMode()) {
+    tone.update(meters);
+    return;
+  }
   if (settings.speakMode === 'change' && speech === lastSpoken) return;
   lastSpoken = speech;
   say(speech);
@@ -153,6 +185,9 @@ function refreshControls() {
   ui.measure.disabled = !(connected && driver.canTrigger);
   ui.autoWrap.hidden = !(driver instanceof SimulatorDriver);
   ui.auto.disabled = !connected;
+  ui.autoLabel.textContent = toneMode()
+    ? 'Stream a pretend room scan (20 readings a second)'
+    : 'Stream readings every 3 seconds';
   ui.source.disabled = connected || busy;
   ui.explorerOptions.hidden = settings.source !== 'explorer';
 }
@@ -168,12 +203,14 @@ function makeDriver() {
     if (state === 'connected' || state === 'disconnected') say(message);
     setWakeLock(state === 'connected' || state === 'connecting');
     if (state === 'disconnected') ui.auto.checked = false;
+    if (state !== 'connected') tone.silence();
     refreshControls();
   });
   return d;
 }
 
 async function connectOrDisconnect() {
+  tone.unlock(); // audio may only start from a tap
   if (driver && driver.state !== 'disconnected' && driver.state !== 'error') {
     await driver.disconnect();
     return;
@@ -248,11 +285,17 @@ function init() {
   bindSetting(ui.voice, 'voiceURI');
   bindSetting(ui.speakMode, 'speakMode');
   bindSetting(ui.output, 'output');
+  bindSetting(ui.feedback, 'feedback', { after: onFeedbackChange });
+  bindSetting(ui.toneRange, 'toneRange', { number: true, after: applyToneSettings });
+  bindSetting(ui.toneDirection, 'toneDirection', { after: applyToneSettings });
+  bindSetting(ui.toneVolume, 'toneVolume', { number: true, after: applyToneSettings });
+  applyToneSettings();
   ui.rateOut.textContent = `${settings.rate}×`;
   showUnitOptions();
 
   ui.connect.addEventListener('click', connectOrDisconnect);
   ui.measure.addEventListener('click', async () => {
+    tone.unlock();
     try {
       await driver?.triggerMeasure();
     } catch (e) {
@@ -260,7 +303,11 @@ function init() {
       say('Measure failed');
     }
   });
-  ui.auto.addEventListener('change', () => driver?.setAuto?.(ui.auto.checked));
+  ui.auto.addEventListener('change', () => {
+    tone.unlock();
+    driver?.setAuto?.(ui.auto.checked, toneMode() ? 'scan' : 'slow');
+  });
+  ui.testTone.addEventListener('click', testTone);
   ui.reading.addEventListener('click', () => {
     if (lastMeters === null) say('No reading yet');
     else say(formatDistance(lastMeters, formatSettings()).speech);
@@ -274,6 +321,32 @@ function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch((e) => log(`Offline support unavailable: ${e.message}`));
   }
+}
+
+function onFeedbackChange() {
+  tone.unlock();
+  if (!toneMode()) tone.silence();
+  lastSpoken = '';
+  // Switch the simulator's stream to match (fast scan for tone, slow for speech).
+  if (ui.auto.checked) driver?.setAuto?.(true, toneMode() ? 'scan' : 'slow');
+  refreshControls();
+  if (lastMeters !== null) showReading(lastMeters);
+}
+
+// Glide from near to far over two seconds so the user learns the scale.
+function testTone() {
+  tone.unlock();
+  const max = Number(settings.toneRange);
+  const steps = 40;
+  let i = 0;
+  const id = setInterval(() => {
+    const meters = 0.2 * Math.pow(max / 0.2, i / steps);
+    tone.update(meters);
+    if (++i > steps) {
+      clearInterval(id);
+      setTimeout(() => tone.silence(), 300);
+    }
+  }, 50);
 }
 
 function onFormatChange() {

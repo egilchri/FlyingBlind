@@ -35,9 +35,14 @@
     <p id="reading-hint" class="hint">Tap the reading to hear it again.</p>
 
     <section class="controls" aria-label="Measuring">
+      <label for="feedback">Feedback</label>
+      <select id="feedback">
+        <option value="speech">Speak each reading</option>
+        <option value="tone">Tone (pitch follows distance)</option>
+      </select>
       <button id="measure" disabled>Measure</button>
       <label id="auto-wrap" class="toggle" hidden>
-        <input id="auto" type="checkbox"> Stream readings every 3 seconds
+        <input id="auto" type="checkbox"> <span id="auto-label">Stream readings every 3 seconds</span>
       </label>
     </section>
 
@@ -87,6 +92,28 @@
         </select>
 
         <button id="test-voice">Test voice</button>
+
+        <h2 class="settings-heading">Tone</h2>
+
+        <label for="tone-range">Tone range</label>
+        <select id="tone-range">
+          <option value="2">Up to 2 m (6½ ft)</option>
+          <option value="5">Up to 5 m (16 ft)</option>
+          <option value="10">Up to 10 m (33 ft)</option>
+          <option value="20">Up to 20 m (65 ft)</option>
+          <option value="40">Up to 40 m (130 ft)</option>
+        </select>
+
+        <label for="tone-direction">Closer sounds</label>
+        <select id="tone-direction">
+          <option value="high">Higher</option>
+          <option value="low">Lower</option>
+        </select>
+
+        <label for="tone-volume">Tone volume <output id="tone-volume-out" for="tone-volume"></output></label>
+        <input id="tone-volume" type="range" min="0.05" max="1" step="0.05">
+
+        <button id="test-tone">Test tone (sweeps near to far)</button>
       </div>
     </details>
 
