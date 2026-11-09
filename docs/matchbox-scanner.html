@@ -599,7 +599,7 @@ p { margin: 0; max-width: 65ch; }
     }
     const lifted = handOn ? LIFT : 0;
     const target = new THREE.Vector3(handOn ? -8 : 0, 17 + lifted + (handOn ? 4 : 0), handOn ? 0 : 0);
-    const offset = handOn ? new THREE.Vector3(95, 95, -105) : new THREE.Vector3(100, 62, 112);
+    const offset = handOn ? new THREE.Vector3(150, 150, -165) : new THREE.Vector3(100, 62, 112);
     return { target, pos: target.clone().add(offset) };
   }
   function resetView() { const h = home(); camera.position.copy(h.pos); controls.target.copy(h.target); }
