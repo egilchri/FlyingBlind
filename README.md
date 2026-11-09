@@ -72,8 +72,11 @@ readings over BLE would work well.
 A first version of this is in the repo:
 
 - `firmware/lidar-ble/lidar-ble.ino`: an Arduino sketch for the ESP32. It reads the sensor over
-  UART and sends about 50 readings a second over BLE, as the device "FBLidar". The wiring is in
-  the file header.
+  UART, plays the distance as a tone on a passive buzzer (so no phone is needed), and also sends
+  about 50 readings a second over BLE, as the device "FBLidar". The wiring is in the file header.
+- `firmware/lidar-ble/tone_logic.h`: how readings become a pitch: log scale, closer = higher,
+  400–3000 Hz to suit a piezo buzzer, a short glide, silence for "no target", and a low tick every
+  3 seconds if the sensor stops sending. Settings are at the top of the sketch.
 - `devices/esp32-lidar.js`: the matching source, listed as **ESP32 LiDAR** in the app.
 
 Parts: an ESP32 dev board, a TF-Luna (or TFmini-S), four jumper wires and a USB power bank.
@@ -92,4 +95,5 @@ Note: the sensor's beam is infrared and invisible, and it is wider than a laser 
 ```sh
 node test/format.test.mjs
 node test/pitch.test.mjs
+c++ -std=c++17 firmware/test/tone_logic_test.cpp -o /tmp/tone_test && /tmp/tone_test
 ```
