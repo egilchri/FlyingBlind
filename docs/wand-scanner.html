@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FlyingBlind Wand Scanner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one big product render on a cutting mat (with a three-way compare), controls under it, then notes on parts and trade-offs. */
+:root {
+  --bg: #eef2f0;
+  --ink: #15201b;
+  --muted: #56645d;
+  --line: #d0d9d4;
+  --accent: #0d7246;
+  --stage: #dfe6e2;
+  --tag-bg: rgba(250, 252, 251, 0.92);
+  --tag-ink: #15201b;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1513; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832; --accent: #52c58f;
+    --stage: #18211d; --tag-bg: rgba(20, 28, 24, 0.9); --tag-ink: #eef3f0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1513; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832; --accent: #52c58f;
+  --stage: #18211d; --tag-bg: rgba(20, 28, 24, 0.9); --tag-ink: #eef3f0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-body); }
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-block: 32px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+header { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font: 500 0.78rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(2rem, 6vw, 3rem)/1.05 var(--font-display); font-stretch: 85%; margin: 0; text-wrap: balance; }
+h2 { font: 700 1.2rem/1.2 var(--font-display); font-stretch: 90%; margin: 0; }
+p { margin: 0; max-width: 65ch; }
+.lede { font-size: 1.08rem; color: var(--muted); }
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 74vh;
+  min-height: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--stage);
+  touch-action: none;
+}
+.stage canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.tags { position: absolute; inset: 0; pointer-events: none; }
+.tag {
+  position: absolute;
+  left: 0; top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px 7px;
+  background: var(--tag-bg);
+  color: var(--tag-ink);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  font: 600 0.82rem/1.25 var(--font-body);
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 12px));
+}
+.tag small { font: 400 0.72rem/1.25 var(--font-body); color: var(--muted); }
+.tag::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  width: 1.5px;
+  height: 12px;
+  background: var(--tag-bg);
+}
+.hint {
+  position: absolute;
+  left: 12px; bottom: 10px;
+  font: 500 0.75rem var(--font-mono);
+  color: #f3ecd6;
+  background: rgba(10, 30, 22, 0.55);
+  padding: 4px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+}
+.fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.toolbar button {
+  font: 500 0.88rem var(--font-body);
+  color: var(--ink);
+  background: transparent;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.toolbar button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.toolbar button:hover { border-color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 40px; padding-top: 8px; border-top: 1px solid var(--line); }
+.notes > div { min-width: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 16px; }
+.notes ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; }
+.vs { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 0; }
+.vs div { display: flex; flex-direction: column; }
+.vs dt { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.vs dd { margin: 0; font: 700 1.15rem var(--font-display); font-variant-numeric: tabular-nums; }
+.size { font: 500 0.9rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">FlyingBlind · no-solder wand</span>
+    <h1>The wand scanner</h1>
+    <p class="lede">A lipstick-size power bank becomes a handle you hold like a flashlight. A plastic ruler on top carries the same sensor, board and buzzer as the first version. Everything is held on with foam tape and two Velcro straps. Point it and sweep.</p>
+  </header>
+
+  <dl class="vs">
+    <div><dt>Size</dt><dd>16 × 3 × 5 cm</dd></div>
+    <div><dt>Weight</dt><dd>about 110 g</dd></div>
+    <div><dt>Soldering</dt><dd>None</dd></div>
+    <div><dt>Battery</dt><dd>about 8 h (estimate)</dd></div>
+  </dl>
+
+  <div class="stage" id="stage">
+    <div class="tags" id="tags"></div>
+    <span class="hint">Drag to turn · scroll or pinch to zoom</span>
+    <div class="fallback" id="fallback" hidden>This picture needs WebGL, which this browser has turned off.</div>
+  </div>
+
+  <div class="toolbar" role="toolbar" aria-label="View controls">
+    <button type="button" id="btn-hand" aria-pressed="true">Hand</button>
+    <button type="button" id="btn-compare" aria-pressed="false">Compare all three</button>
+    <button type="button" id="btn-labels" aria-pressed="true">Labels</button>
+    <button type="button" id="btn-spin" aria-pressed="true">Turntable</button>
+    <button type="button" id="btn-reset">Reset view</button>
+  </div>
+
+  <div class="notes">
+    <div>
+      <h2>Parts, compared with the first version</h2>
+      <ul>
+        <li><strong>Same:</strong> TF-Luna sensor, ESP32 DevKit, buzzer module, jumper wires and foam tape. The wiring diagram and firmware don't change.</li>
+        <li><strong>Swap the power bank</strong> for a lipstick-style one, about 2.5 cm across and 9.5 cm long (2,600 mAh is common).</li>
+        <li><strong>Add a 15 cm plastic ruler</strong> as the spine, or any stiff strip about 2.5 cm wide.</li>
+        <li><strong>Add two Velcro cable straps</strong> to hold the power bank under the ruler.</li>
+        <li><strong>Add a short USB cable</strong> (about 20 cm) that fits both the power bank's output and the board.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Trade-offs</h2>
+      <ul>
+        <li>Plugs together like the first version, and it's easy to take apart and change.</li>
+        <li>A natural flashlight grip: the arm, the wand and the beam all point the same way, which suits sweeping.</li>
+        <li>Longer than the matchbox design, with the electronics out in the open, so they can snag.</li>
+        <li>The buzzer hangs under the ruler, so the tone comes from below the beam.</li>
+        <li>This is a 3D model at true size, not a photo. Battery life and weight are estimates.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+<script>
+(function () {
+  const stage = document.getElementById('stage');
+  const tagsEl = document.getElementById('tags');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  } catch (e) {
+    document.getElementById('fallback').hidden = false;
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.82;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.prepend(renderer.domElement);
+
+  // Units: 1 = 1 mm. x = forward (the beam), y = up, z = to the right.
+  const scene = new THREE.Scene();
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+  const device = new THREE.Group();
+  const others = new THREE.Group(); // first version + matchbox, for comparison
+  scene.add(device, others);
+  const LIFT = 105;
+
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 3000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.minDistance = 60;
+  controls.maxDistance = 800;
+  controls.maxPolarAngle = Math.PI * 0.47;
+  controls.autoRotate = !reduceMotion;
+  controls.autoRotateSpeed = 0.7;
+
+  scene.add(new THREE.HemisphereLight(0xf4f1ea, 0x24443a, 0.35));
+  const sun = new THREE.DirectionalLight(0xfff4e6, 1.35);
+  sun.position.set(90, 220, 120);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -240, right: 240, top: 240, bottom: -240, near: 50, far: 800 });
+  sun.shadow.radius = 4;
+  sun.shadow.bias = -0.0004;
+  scene.add(sun);
+
+  const mat = (o) => new THREE.MeshPhysicalMaterial(o);
+  const rbox = (w, h, d, r) => new THREE.RoundedBoxGeometry(w, h, d, 4, r);
+  function add(parent, geo, material, x, y, z, { cast = true, receive = true } = {}) {
+    const m = new THREE.Mesh(geo, material);
+    m.position.set(x, y, z);
+    m.castShadow = cast;
+    m.receiveShadow = receive;
+    parent.add(m);
+    return m;
+  }
+  const M = {
+    bank: mat({ color: 0x35598f, roughness: 0.32, metalness: 0.75, clearcoat: 0.3 }),
+    bankCap: mat({ color: 0x1c2533, roughness: 0.4, metalness: 0.5 }),
+    sensor: mat({ color: 0x17191c, roughness: 0.6 }),
+    lens: mat({ color: 0x1a1030, roughness: 0.05, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.02 }),
+    lensRing: mat({ color: 0x3a3d44, roughness: 0.35, metalness: 0.6 }),
+    metal: mat({ color: 0xd5d9de, roughness: 0.25, metalness: 1 }),
+    gold: mat({ color: 0xd9b24a, roughness: 0.3, metalness: 1 }),
+    black: mat({ color: 0x111214, roughness: 0.5 }),
+    plastic: mat({ color: 0x0b0b0c, roughness: 0.45 }),
+    esp: mat({ color: 0x14171c, roughness: 0.6 }),
+    buzzBoard: mat({ color: 0x23469a, roughness: 0.5, clearcoat: 0.3 }),
+    foam: mat({ color: 0xeee3c0, roughness: 0.95 }),
+    strap: mat({ color: 0x1b1d20, roughness: 0.95, sheen: 0.5, sheenColor: new THREE.Color(0x555b63) }),
+    cable: mat({ color: 0xe6e6e6, roughness: 0.5 }),
+    plug: mat({ color: 0x2c2f34, roughness: 0.5 }),
+    caseOrange: mat({ color: 0xe8870f, roughness: 0.6, clearcoat: 0.1 }),
+    bezel: mat({ color: 0x101113, roughness: 0.4 }),
+    led: new THREE.MeshStandardMaterial({ color: 0x7fd7ff, emissive: 0x4fc3ff, emissiveIntensity: 1.6 }),
+  };
+
+  // ---------- cutting mat ----------
+  (function () {
+    const W = 2400, H = 1600, PX = 4;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    g.fillStyle = '#17483a';
+    g.fillRect(0, 0, W, H);
+    for (let mm = 0; mm <= 600; mm += 10) {
+      const major = mm % 50 === 0;
+      g.strokeStyle = major ? 'rgba(170,220,195,0.45)' : 'rgba(150,205,180,0.22)';
+      g.lineWidth = major ? 2.5 : 1.2;
+      g.beginPath(); g.moveTo(mm * PX, 0); g.lineTo(mm * PX, H); g.stroke();
+      if (mm <= 400) { g.beginPath(); g.moveTo(0, mm * PX); g.lineTo(W, mm * PX); g.stroke(); }
+    }
+    g.fillStyle = 'rgba(232, 210, 120, 0.85)';
+    g.font = '500 22px "IBM Plex Mono", monospace';
+    for (let cm = 0; cm <= 60; cm++) g.fillText(String(cm), cm * 10 * PX + 6, 30);
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 400), new THREE.MeshStandardMaterial({ map: t, roughness: 0.92 }));
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(0, 0, -40);
+    ground.receiveShadow = true;
+    scene.add(ground);
+  })();
+
+  // ================= the wand =================
+  // Everything sits on a 150 x 1.5 x 25 mm ruler; the power bank hangs under its back half.
+  const RY = 26; // ruler underside height above the mat when lying flat (bank radius 12 + some)
+  // ruler with tick marks
+  (function () {
+    const c = document.createElement('canvas');
+    c.width = 1500; c.height = 250;
+    const g = c.getContext('2d');
+    g.fillStyle = '#f4f4f0';
+    g.fillRect(0, 0, 1500, 250);
+    g.strokeStyle = '#222';
+    g.fillStyle = '#222';
+    g.font = '600 34px "IBM Plex Sans", sans-serif';
+    for (let mm = 0; mm <= 150; mm++) {
+      const x = 1500 - mm * 10;   // 0 at the front end
+      const len = mm % 10 === 0 ? 70 : mm % 5 === 0 ? 50 : 32;
+      g.lineWidth = mm % 10 === 0 ? 3 : 2;
+      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, len); g.stroke();
+      if (mm % 10 === 0 && mm > 0 && mm < 150) g.fillText(String(mm / 10), x - 9, 110);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    const top = new THREE.MeshPhysicalMaterial({ map: t, roughness: 0.35, clearcoat: 0.4 });
+    const side = mat({ color: 0xf0f0ea, roughness: 0.4 });
+    const r = add(device, new THREE.BoxGeometry(150, 1.5, 25), [side, side, top, side, side, side], 0, RY + 0.75, 0);
+    r.material[2].map.rotation = 0;
+  })();
+  const TOP = RY + 1.5;
+
+  // lipstick power bank under the back half
+  const bank = add(device, new THREE.CylinderGeometry(12, 12, 95, 64), M.bank, -27.5, RY - 12, 0);
+  bank.rotation.z = Math.PI / 2;
+  const capF = add(device, new THREE.CylinderGeometry(12.1, 12.1, 3, 64), M.bankCap, 19, RY - 12, 0);
+  capF.rotation.z = Math.PI / 2;
+  const capB = add(device, new THREE.CylinderGeometry(12.1, 12.1, 3, 64), M.bankCap, -74, RY - 12, 0);
+  capB.rotation.z = Math.PI / 2;
+  add(device, new THREE.SphereGeometry(0.9, 12, 8), M.led, -75.6, RY - 6, 0, { cast: false });
+  // USB-A plug in the back end, cable up and forward to the board
+  add(device, new THREE.BoxGeometry(5, 4.5, 12), M.metal, -78, RY - 14, 0);
+  add(device, rbox(13, 7.5, 15, 2), M.plug, -86.5, RY - 14, 0);
+  function wire(points, color, r = 0.65) {
+    const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)));
+    add(device, new THREE.TubeGeometry(curve, 90, r, 10, false), mat({ color, roughness: 0.45, clearcoat: 0.3 }), 0, 0, 0);
+  }
+  wire([[-93, RY - 14, 0], [-104, RY - 6, -4], [-96, TOP + 6, -8], [-78, TOP + 2.2, -9], [-30, TOP + 2.2, -9], [-6, TOP + 2.4, -6], [2, TOP + 3.6, 0]], 0xe6e6e6, 1.8);
+  add(device, rbox(9, 5.5, 9, 1.5), M.plug, 3.5, TOP + 3.6, 0);
+
+  // two Velcro straps around ruler + bank
+  function strap(x, w) {
+    const sh = new THREE.Shape();
+    const R = (s, x0, y0, wd, ht, rr) => {
+      s.moveTo(x0 + rr, y0); s.lineTo(x0 + wd - rr, y0); s.quadraticCurveTo(x0 + wd, y0, x0 + wd, y0 + rr);
+      s.lineTo(x0 + wd, y0 + ht - rr); s.quadraticCurveTo(x0 + wd, y0 + ht, x0 + wd - rr, y0 + ht);
+      s.lineTo(x0 + rr, y0 + ht); s.quadraticCurveTo(x0, y0 + ht, x0, y0 + ht - rr);
+      s.lineTo(x0, y0 + rr); s.quadraticCurveTo(x0, y0, x0 + rr, y0);
+    };
+    R(sh, -14.2, -1.4, 28.4, 30.2, 9);
+    const hole = new THREE.Path();
+    R(hole, -12.8, 0, 25.6, 27.5, 8);
+    sh.holes.push(hole);
+    const geo = new THREE.ExtrudeGeometry(sh, { depth: w, bevelEnabled: false, curveSegments: 10 });
+    const m = add(device, geo, M.strap, x - w / 2, RY - 24, 0);
+    m.rotation.y = Math.PI / 2;
+    m.position.set(x - w / 2, RY - 24 + 0.2, 0);
+    m.rotation.y = -Math.PI / 2;
+    m.position.x = x + w / 2;
+  }
+  strap(-71, 9);
+  strap(2, 7);
+
+  // ESP32 DevKit, pins up, on the front half of the ruler
+  const B = { x0: 9.5, len: 51.5, wid: 28, y: TOP + 1.5 };
+  add(device, new THREE.BoxGeometry(46, 1.5, 22), M.foam, B.x0 + 26, TOP + 0.75, 0);
+  add(device, new THREE.BoxGeometry(B.len, 1.6, B.wid), M.esp, B.x0 + B.len / 2, B.y + 0.8, 0);
+  const yTop = B.y + 1.6;
+  const pinX = (i) => B.x0 + 3 + i * 2.54;
+  const rowA = -B.wid / 2 + 1.3, rowB = B.wid / 2 - 1.3;
+  for (const z of [rowA, rowB]) {
+    add(device, new THREE.BoxGeometry(19 * 2.54, 2.5, 2.54), M.plastic, B.x0 + 3 + 9 * 2.54, yTop + 1.25, z);
+    for (let i = 0; i < 19; i++) add(device, new THREE.BoxGeometry(0.64, 6, 0.64), M.gold, pinX(i), yTop + 5.5, z, { receive: false });
+  }
+  const housingTop = yTop + 2.5 + 1 + 14;
+  const used = [[0, rowA], [5, rowA], [10, rowA], [18, rowA], [7, rowB], [8, rowB], [12, rowB]];
+  for (const [i, z] of used) add(device, new THREE.BoxGeometry(2.5, 14, 2.5), M.plastic, pinX(i), yTop + 10.5, z);
+
+  // TF-Luna at the front end, facing forward
+  const SX = 75 - 6.75, SY = TOP + 21.25 / 2;
+  add(device, new THREE.BoxGeometry(13.5, 1.5, 33), M.foam, SX, TOP + 0.75, 0);
+  add(device, rbox(13.5, 21.25, 35, 1.4), M.sensor, SX, SY + 1.5, 0);
+  for (const z of [-8, 8]) {
+    const ring = add(device, new THREE.CylinderGeometry(5.6, 5.6, 1.2, 48), M.lensRing, SX + 6.9, SY + 2.5, z);
+    ring.rotation.z = Math.PI / 2;
+    const lens = add(device, new THREE.SphereGeometry(4.6, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2.6), M.lens, SX + 6.9, SY + 2.5, z, { cast: false });
+    lens.rotation.z = -Math.PI / 2;
+    lens.scale.set(1, 0.35, 1);
+  }
+
+  // buzzer module hanging under the front of the ruler
+  add(device, new THREE.BoxGeometry(33, 1.5, 12), M.foam, 42, RY - 0.75, 0);
+  add(device, new THREE.BoxGeometry(33, 1.6, 13), M.buzzBoard, 42, RY - 2.3, 0);
+  add(device, new THREE.CylinderGeometry(6, 6, 9.5, 40), M.black, 34, RY - 3.1 - 4.75, 0);
+  for (const z of [-2.54, 0, 2.54]) add(device, new THREE.BoxGeometry(14, 2.5, 2.5), M.plastic, 65, RY - 2.3, z);
+
+  // wires
+  const conn = (dy, dz) => [SX - 9, SY + dy, dz];
+  const pw = (i, z, from, mid, color) => wire([from, mid, [pinX(i) + 4, housingTop + 8, z], [pinX(i), housingTop + 2, z], [pinX(i), housingTop - 0.5, z]], color);
+  pw(0, rowA, conn(1.5, -3), [38, TOP + 30, -10], 0xd13a2c);
+  pw(5, rowA, conn(1.5, -1), [40, TOP + 28, -8], 0x1a1a1a);
+  pw(7, rowB, conn(-1.5, 1), [40, TOP + 27, 8], 0x2fa34a);
+  pw(8, rowB, conn(-1.5, 3), [42, TOP + 30, 10], 0xf2f2f2);
+  pw(10, rowA, [72, RY - 2.3, -2.54], [76, TOP + 2, -14.5], 0xf0a020);
+  pw(18, rowA, [72, RY - 2.3, 0], [77, TOP + 4, -15], 0xd13a2c);
+  pw(12, rowB, [72, RY - 2.3, 2.54], [76, TOP + 3, 15], 0x1a1a1a);
+
+  // beam
+  const beamLen = 260;
+  const beamGeo = new THREE.CylinderGeometry(4.6 + beamLen * Math.tan(Math.PI / 180), 4.6, beamLen, 40, 1, true);
+  beamGeo.rotateZ(-Math.PI / 2);
+  beamGeo.translate(beamLen / 2, 0, 0);
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0xff4a2e, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide });
+  const beam = new THREE.Group();
+  [-8, 8].forEach((z) => { const b = new THREE.Mesh(beamGeo, beamMat); b.position.set(SX + 7.5, SY + 2.5, z); beam.add(b); });
+  device.add(beam);
+
+  // ---------- hand (right hand, holding it like a flashlight) ----------
+  // Each finger is one smooth surface swept along a jointed centre line, with
+  // a rounded tip, a fuller pad, and a nail that follows the fingertip's curve.
+  const hand = new THREE.Group();
+  device.add(hand);
+  const SKIN = new THREE.Color(0x9b5f42);
+  const skin = mat({ color: SKIN, roughness: 0.55, sheen: 0.25, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffc4a6), clearcoat: 0.06, clearcoatRoughness: 0.6 });
+  const skinVC = skin.clone();
+  skinVC.color = new THREE.Color(0xffffff);
+  skinVC.vertexColors = true;
+  const nailMat = mat({ color: 0xffffff, vertexColors: true, roughness: 0.32, clearcoat: 0.6, clearcoatRoughness: 0.25, side: THREE.DoubleSide });
+  const sleeveMat = mat({ color: 0x2c3a55, roughness: 0.9, sheen: 0.6, sheenColor: new THREE.Color(0x6d7ea3) });
+  const C = (hex) => new THREE.Color(hex);
+  const TIP_RED = C(0xa8513d), PALM_LIGHT = C(0xb67c5d), CREASE = C(0x7a4631);
+  const NAIL = C(0xbf8274), LUNULA = C(0xd3a698), FREE_EDGE = C(0xd2b3a6);
+  const V3 = (a) => new THREE.Vector3(...a);
+  const UP = new THREE.Vector3(0, 1, 0);
+  const smooth01 = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+  const putH = (m) => { m.castShadow = true; m.receiveShadow = true; hand.add(m); return m; };
+
+  // spec: base (knuckle), dir (pointing when straight), palmar (which way the pad faces),
+  // lengths of the 3 bones, bend at each joint (radians), base and tip radius.
+  function digit({ base, dir, palmar, lengths, bends, r0, rTip, knuckleW = 6 }) {
+    const d0 = V3(dir).normalize();
+    const P = V3(palmar); P.addScaledVector(d0, -P.dot(d0)).normalize();
+    const axis = d0.clone().cross(P).normalize();   // bending turns d0 toward the palm side
+    const n0 = P.clone().negate();                   // back of the finger
+    const L = lengths[0] + lengths[1] + lengths[2];
+    const jc = [knuckleW, lengths[0], lengths[0] + lengths[1]];
+    const jw = [knuckleW, 5, 3.5];
+    const cap = rTip * 1.05;
+    const angleAt = (s) => bends.reduce((acc, th, k) => acc + th * smooth01((s - (jc[k] - jw[k])) / (2 * jw[k])), 0);
+    const radiusAt = (s) => {
+      let r = r0 + (rTip - r0) * Math.min(1, s / (L - cap));
+      for (let k = 1; k < 3; k++) r *= 1 + 0.06 * Math.exp(-(((s - jc[k]) / 4) ** 2));
+      if (s > L - cap) r *= Math.sqrt(Math.max(0, 1 - ((s - (L - cap)) / cap) ** 2));
+      return r;
+    };
+    const padAt = (s) => Math.exp(-(((s - (L - lengths[2] * 0.42)) / (lengths[2] * 0.35)) ** 2));
+
+    // centre line
+    const N = 96, frames = [];
+    let p = V3(base), prevT = null;
+    for (let i = 0; i <= N; i++) {
+      const s = (L * i) / N, a = angleAt(s);
+      const t = d0.clone().applyAxisAngle(axis, a);
+      const back = n0.clone().applyAxisAngle(axis, a);
+      if (prevT) p = p.clone().addScaledVector(t.clone().add(prevT).normalize(), L / N);
+      frames.push({ s, p, back, side: t.clone().cross(back), r: radiusAt(s) });
+      prevT = t;
+    }
+    const frameAt = (s) => {
+      const f = Math.min(N - 1e-6, Math.max(0, (s / L) * N)), i = Math.floor(f), w = f - i;
+      const A = frames[i], B = frames[i + 1];
+      return {
+        p: A.p.clone().lerp(B.p, w), back: A.back.clone().lerp(B.back, w).normalize(),
+        side: A.side.clone().lerp(B.side, w).normalize(), r: A.r + (B.r - A.r) * w,
+      };
+    };
+    const surf = (F, phi, s, extra = 0) => {
+      const c = Math.cos(phi), sn = Math.sin(phi);
+      const pad = c < 0 ? 1 + 0.12 * padAt(s) * -c : 1;
+      const ry = (F.r + extra) * 0.92 * pad, rx = (F.r + extra) * 1.07;
+      return F.p.clone().addScaledVector(F.back, c * ry).addScaledVector(F.side, sn * rx);
+    };
+
+    // skin
+    const M = 32, pos = [], col = [], idx = [];
+    frames.forEach((F, i) => {
+      for (let j = 0; j < M; j++) {
+        const phi = (j / M) * Math.PI * 2, c = Math.cos(phi);
+        const q = surf(F, phi, F.s);
+        pos.push(q.x, q.y, q.z);
+        const k = SKIN.clone();
+        if (c < 0) k.lerp(PALM_LIGHT, 0.35 * -c);
+        k.lerp(TIP_RED, 0.4 * smooth01((F.s - (L - lengths[2] * 1.1)) / (lengths[2] * 1.1)));
+        const crease = Math.max(...[1, 2].map((n) => Math.exp(-(((F.s - jc[n]) / 2.5) ** 2))));
+        if (c > 0.3) k.lerp(CREASE, 0.28 * crease * c);
+        col.push(k.r, k.g, k.b);
+      }
+    });
+    for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) {
+      const a = i * M + j, b = i * M + ((j + 1) % M), c2 = a + M, d = b + M;
+      idx.push(a, b, c2, b, d, c2);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    putH(new THREE.Mesh(g, skinVC));
+
+    // nail: a thin shell on the back of the last bone
+    const sA = L - lengths[2] * 0.52, sB = L - cap * 0.38;
+    const NU = 28, NV = 18, maxHW = 0.72, npos = [], ncol = [], nidx = [];
+    for (let iu = 0; iu <= NU; iu++) {
+      const u = iu / NU, s = sA + (sB - sA) * u;
+      const F = frameAt(s);
+      F.r = Math.max(F.r, rTip * 0.8);   // the free edge carries on past the flesh
+      let hw = maxHW;
+      if (u < 0.14) hw *= 0.72 + 0.28 * Math.sqrt(1 - ((0.14 - u) / 0.14) ** 2);
+      if (u > 0.82) hw *= 0.86 + 0.14 * Math.sqrt(Math.max(0, 1 - ((u - 0.82) / 0.18) ** 2));
+      for (let iv = 0; iv <= NV; iv++) {
+        const v = (iv / NV) * 2 - 1;
+        const q = surf(F, v * hw, s, 0.22 + 0.2 * (1 - v * v));
+        npos.push(q.x, q.y, q.z);
+        const k = NAIL.clone();
+        k.lerp(LUNULA, 0.85 * smooth01((0.2 - u) / 0.12) * (1 - Math.abs(v) ** 3));
+        k.lerp(FREE_EDGE, smooth01((u - 0.9) / 0.08));
+        k.lerp(SKIN, 0.25 * Math.abs(v) ** 6);
+        ncol.push(k.r, k.g, k.b);
+      }
+    }
+    for (let iu = 0; iu < NU; iu++) for (let iv = 0; iv < NV; iv++) {
+      const a = iu * (NV + 1) + iv, b = a + 1, c2 = a + NV + 1, d = c2 + 1;
+      nidx.push(a, c2, b, b, c2, d);
+    }
+    const ng = new THREE.BufferGeometry();
+    ng.setAttribute('position', new THREE.Float32BufferAttribute(npos, 3));
+    ng.setAttribute('color', new THREE.Float32BufferAttribute(ncol, 3));
+    ng.setIndex(nidx);
+    ng.computeVertexNormals();
+    putH(new THREE.Mesh(ng, nailMat));
+    return frames;
+  }
+
+  function blobH(c, sc, rotY = 0) {
+    const m = putH(new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), skin));
+    m.position.set(...c);
+    m.scale.set(...sc);
+    m.rotation.y = rotY;
+    return m;
+  }
+  function limb(a, b, rA, rB, material) {
+    const A = V3(a), B = V3(b);
+    const m = putH(new THREE.Mesh(new THREE.CylinderGeometry(rB, rA, A.distanceTo(B), 48, 1, true), material));
+    m.position.copy(A).add(B).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(UP, B.clone().sub(A).normalize());
+    const cap = putH(new THREE.Mesh(new THREE.SphereGeometry(rA, 40, 24), material));
+    cap.position.copy(A);
+    return m;
+  }
+
+
+  // HAND_POSE: fist around the handle (bank + ruler), thumb on top pointing forward.
+  // Handle cross-section: y from RY-24 to TOP, z from -12.5 to 12.5. Fingers start
+  // under the right edge, wrap under the handle and come up the left side.
+  const HB = RY - 24;
+  const FDOWN = [0, -1, 0], PAD_LEFT = [0, 0, -1];
+  digit({ base: [-12, HB + 2, 19], dir: FDOWN, palmar: PAD_LEFT, lengths: [40, 24, 19], bends: [1.25, 1.45, 0.55], r0: 8.6, rTip: 7.0 });
+  digit({ base: [-29, HB + 1, 20], dir: FDOWN, palmar: PAD_LEFT, lengths: [44, 27, 20], bends: [1.2, 1.4, 0.5], r0: 9.0, rTip: 7.3 });
+  digit({ base: [-46, HB + 2, 19], dir: FDOWN, palmar: PAD_LEFT, lengths: [41, 26, 19], bends: [1.25, 1.45, 0.55], r0: 8.6, rTip: 7.0 });
+  digit({ base: [-61, HB + 4, 18], dir: FDOWN, palmar: PAD_LEFT, lengths: [33, 20, 17], bends: [1.35, 1.5, 0.6], r0: 7.6, rTip: 6.2 });
+  // thumb along the top of the ruler, pointing forward
+  digit({ base: [-52, TOP + 6, 17], dir: [1, -0.08, -0.32], palmar: [0, -1, 0], lengths: [24, 27, 22], bends: [0.12, 0.12, 0.15], r0: 10.5, rTip: 8.2, knuckleW: 8 });
+  // palm against the right side, heel and thumb pad, wrist and forearm going back
+  blobH([-37, RY - 10, 25], [40, 22, 11]);
+  blobH([-50, TOP - 2, 20], [22, 12, 14], 0.3);
+  blobH([-70, RY - 14, 24], [16, 18, 12]);
+  const WR = [-84, RY - 10, 27];
+  const fdir = new THREE.Vector3(-0.9, -0.28, 0.33).normalize();
+  const EL = new THREE.Vector3(...WR).addScaledVector(fdir, 230);
+  limb(WR, EL.toArray(), 24, 31, skin);
+  const s0 = new THREE.Vector3(...WR).addScaledVector(fdir, 70), s1 = new THREE.Vector3(...WR).addScaledVector(fdir, 260);
+  limb(s0.toArray(), s1.toArray(), 34, 37, sleeveMat);
+
+  // ================= the other two, for comparison =================
+  const OZ1 = -95, OZ2 = -180;
+  // matchbox design
+  add(others, rbox(38, 34, 46, 5), M.caseOrange, 0, 17, OZ1);
+  add(others, rbox(1.4, 24, 38, 1.2), M.bezel, 19.4, 17, OZ1);
+  for (const z of [-8, 8]) { const r = add(others, new THREE.CylinderGeometry(5.6, 5.6, 1.2, 48), M.lensRing, 19.9, 18, OZ1 + z); r.rotation.z = Math.PI / 2; }
+  // first version
+  add(others, rbox(100, 15, 65, 5), M.esp, 0, 7.5, OZ2);
+  add(others, rbox(13.5, 21.25, 35, 1.4), M.sensor, 45.75, 27.1, OZ2);
+  add(others, new THREE.BoxGeometry(51.5, 1.6, 28), M.esp, -10.25, 20.3, OZ2 - 13);
+  add(others, new THREE.BoxGeometry(33, 1.6, 13), M.buzzBoard, -10.5, 17.3, OZ2 + 19.5);
+  add(others, new THREE.CylinderGeometry(6, 6, 9.5, 40), M.black, -18, 22.8, OZ2 + 19.5);
+  for (const z of [-8, 8]) { const r = add(others, new THREE.CylinderGeometry(5.6, 5.6, 1.2, 48), M.lensRing, 53.1, 28, OZ2 + z); r.rotation.z = Math.PI / 2; }
+  others.visible = false;
+
+  scene.traverse((o) => {
+    if (!o.isMesh) return;
+    for (const m of [].concat(o.material)) if ('envMapIntensity' in m) m.envMapIntensity = 0.55;
+  });
+
+  // ---------- labels ----------
+  const TAGS = [
+    { mode: 'main', at: [SX, SY + 14, -12], title: 'LiDAR sensor', sub: 'Aim this end' },
+    { mode: 'main', at: [32, housingTop + 4, rowA], title: 'ESP32 board', sub: 'Pins up, wires push on' },
+    { mode: 'main', at: [-30, RY - 26, -2], title: 'Lipstick power bank', sub: 'The handle' },
+    { mode: 'main', at: [-100, TOP + 6, -6], title: 'USB cable' },
+    { mode: 'main', at: [-71, TOP + 4, -12], title: 'Velcro strap' },
+    { mode: 'main', at: [55, TOP + 3, 12.5], title: '15 cm ruler', sub: 'The spine' },
+    { mode: 'main', at: [34, RY - 13, 0], title: 'Buzzer', sub: 'Underneath', hideWithHand: false },
+    { mode: 'compare', at: [0, TOP + 26, 0], title: 'Wand', sub: '16 × 3 × 5 cm · no soldering' },
+    { mode: 'compare', at: [0, 40, OZ1], title: 'Matchbox', sub: '4.6 × 3.4 × 3.8 cm · soldered' },
+    { mode: 'compare', at: [-10, 38, OZ2], title: 'First version', sub: '12 × 6.5 × 4 cm · no soldering' },
+  ].map((t) => {
+    const el = document.createElement('div');
+    el.className = 'tag';
+    el.innerHTML = t.title + (t.sub ? `<small>${t.sub}</small>` : '');
+    tagsEl.appendChild(el);
+    return { ...t, el, v: new THREE.Vector3(...t.at) };
+  });
+
+  let showLabels = true, handOn = true, compare = false;
+  function placeTags(w, h) {
+    const mode = compare ? 'compare' : 'main';
+    for (const t of TAGS) {
+      const world = t.mode === 'compare' && t.v.z !== 0 ? t.v.clone() : device.localToWorld(t.v.clone());
+      const p = world.project(camera);
+      const on = showLabels && t.mode === mode && p.z < 1 && Math.abs(p.x) < 1.1 && Math.abs(p.y) < 1.1;
+      t.el.hidden = !on;
+      if (on) t.el.style.transform = `translate(${((p.x + 1) / 2) * w}px, ${((1 - p.y) / 2) * h}px) translate(-50%, calc(-100% - 12px))`;
+    }
+  }
+
+  function home() {
+    if (compare) {
+      const target = new THREE.Vector3(0, 15, -90);
+      return { target, pos: target.clone().add(new THREE.Vector3(250, 230, 160)) };
+    }
+    const lifted = device.position.y;
+    const target = new THREE.Vector3(handOn ? -10 : 0, RY + lifted, 0);
+    const offset = handOn ? new THREE.Vector3(150, 95, -190) : new THREE.Vector3(150, 100, 190);
+    return { target, pos: target.clone().add(offset) };
+  }
+  function resetView() { const h = home(); camera.position.copy(h.pos); controls.target.copy(h.target); }
+  function applyScene() {
+    hand.visible = handOn && !compare;
+    beam.visible = !compare;
+    device.position.y = hand.visible ? LIFT : 0;
+    others.visible = compare;
+    resetView();
+  }
+
+  let W = 1, H = 1;
+  function resize() {
+    W = stage.clientWidth; H = stage.clientHeight;
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    camera.fov = W / H < 1.2 ? 44 : 32;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+  renderer.setAnimationLoop(() => {
+    controls.update();
+    renderer.render(scene, camera);
+    placeTags(W, H);
+  });
+
+  const btn = (id) => document.getElementById(id);
+  function toggle(id, on) { btn(id).setAttribute('aria-pressed', String(on)); }
+  toggle('btn-spin', controls.autoRotate);
+  btn('btn-hand').addEventListener('click', () => { handOn = !handOn; toggle('btn-hand', handOn); applyScene(); });
+  btn('btn-compare').addEventListener('click', () => { compare = !compare; toggle('btn-compare', compare); applyScene(); });
+  btn('btn-labels').addEventListener('click', () => { showLabels = !showLabels; toggle('btn-labels', showLabels); });
+  btn('btn-spin').addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; toggle('btn-spin', controls.autoRotate); });
+  btn('btn-reset').addEventListener('click', resetView);
+  controls.addEventListener('start', () => { controls.autoRotate = false; toggle('btn-spin', false); });
+  applyScene();
+})();
+</script>
+
+</body>
+</html>

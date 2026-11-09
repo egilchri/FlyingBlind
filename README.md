@@ -94,6 +94,13 @@ A 3D picture of the phone-free version, held in a hand, is in `docs/pocket-scann
 in a browser (or at `https://egilchri.github.io/FlyingBlind/docs/pocket-scanner.html`) and drag to
 turn it.
 
+Two alternative designs, also as 3D pictures:
+
+- `docs/matchbox-scanner.html`: everything packed into a 46 × 34 × 38 mm case with a built-in
+  battery. Smallest, but needs soldering and a 3D-printed case.
+- `docs/wand-scanner.html`: a lipstick power bank as a flashlight-style handle, with the parts on a
+  ruler. No soldering; same wiring and firmware as the first version.
+
 Note: the sensor's beam is infrared and invisible, and it is wider than a laser meter's dot (about
 2° for the TF-Luna), so it reads the nearest large surface rather than a pinpoint.
 
