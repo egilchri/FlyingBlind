@@ -442,7 +442,7 @@ p { margin: 0; max-width: 65ch; }
   const skin = new THREE.MeshPhysicalMaterial({
     color: 0xb87652, roughness: 0.55, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffc9b0), clearcoat: 0.08,
   });
-  const nailMat = new THREE.MeshPhysicalMaterial({ color: 0xd9a08c, roughness: 0.25, clearcoat: 0.8 });
+  const nailMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.32, clearcoat: 0.6, clearcoatRoughness: 0.25, side: THREE.DoubleSide });
   const sleeveMat = new THREE.MeshPhysicalMaterial({ color: 0x2c3a55, roughness: 0.9, sheen: 0.6, sheenColor: new THREE.Color(0x6d7ea3) });
   const V = (a) => new THREE.Vector3(...a);
   const UP = new THREE.Vector3(0, 1, 0);
@@ -467,17 +467,56 @@ p { margin: 0; max-width: 65ch; }
     m.scale.set(...sc);
     return m;
   }
-  function nail(tip, out, r) {
-    const T = V(tip), O = V(out).normalize();
-    const m = put(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), nailMat));
-    m.scale.set(r * 0.72, r * 0.85, r * 0.22);
-    m.position.copy(T).addScaledVector(O, r * 0.82);
-    m.lookAt(m.position.clone().add(O));
+  // A nail is a thin curved shell lying on the back of the last finger bone:
+  // it starts partway along the bone and stops just past the fingertip,
+  // following the finger's round cross-section rather than sitting on the end.
+  const NAIL = new THREE.Color(0xc98a7a), LUNULA = new THREE.Color(0xdcb0a2), FREE_EDGE = new THREE.Color(0xe2c8bc);
+  const SKINC = new THREE.Color(0xb87652);
+  const sm = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+  function nail(a, b, r, out) {
+    const A = V(a), B = V(b), len = A.distanceTo(B);
+    const t = B.clone().sub(A).normalize();
+    const back = V(out); back.addScaledVector(t, -back.dot(t)).normalize();   // back of the finger
+    const side = t.clone().cross(back);
+    const s0 = len - Math.min(len * 0.62, r * 1.45), s1 = len + r * 0.72; // past B the capsule's dome
+    const NU = 24, NV = 16, pos = [], col = [], idx = [];
+    for (let iu = 0; iu <= NU; iu++) {
+      const u = iu / NU, s = s0 + (s1 - s0) * u;
+      // over the dome, the flesh drops away; the nail keeps going a little flatter
+      const over = Math.max(0, s - len), drop = r - Math.sqrt(Math.max(0, r * r - over * over));
+      let hw = 0.68;                                   // half-width, radians around the finger
+      if (u < 0.15) hw *= 0.7 + 0.3 * Math.sqrt(1 - ((0.15 - u) / 0.15) ** 2);   // rounded base
+      for (let iv = 0; iv <= NV; iv++) {
+        const v = (iv / NV) * 2 - 1, ang = v * hw;
+        const lift = 0.18 + 0.28 * (1 - v * v) * sm(u / 0.3);   // edges tuck into the skin
+        const rr = r + lift;
+        const q = A.clone().addScaledVector(t, Math.min(s, len) + over * 0.9)
+          .addScaledVector(back, Math.cos(ang) * rr - drop * 0.6)
+          .addScaledVector(side, Math.sin(ang) * rr * 0.98);
+        pos.push(q.x, q.y, q.z);
+        const k = NAIL.clone();
+        k.lerp(LUNULA, 0.8 * sm((0.2 - u) / 0.12) * (1 - Math.abs(v) ** 3));
+        k.lerp(FREE_EDGE, sm((u - 0.86) / 0.1));
+        k.lerp(SKINC, 0.3 * Math.abs(v) ** 6);
+        col.push(k.r, k.g, k.b);
+      }
+    }
+    for (let iu = 0; iu < NU; iu++) for (let iv = 0; iv < NV; iv++) {
+      const p0 = iu * (NV + 1) + iv, p1 = p0 + 1, p2 = p0 + NV + 1, p3 = p2 + 1;
+      idx.push(p0, p2, p1, p1, p2, p3);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    put(new THREE.Mesh(g, nailMat));
   }
   // a finger is a chain of points with a radius for each segment
   function finger(points, radii, out) {
     for (let i = 0; i < points.length - 1; i++) capsule(points[i], points[i + 1], radii[i]);
-    nail(points[points.length - 1], out, radii[radii.length - 1]);
+    const n = points.length;
+    nail(points[n - 2], points[n - 1], radii[radii.length - 1], out);
   }
 
   // palm, heel of the hand, and the pad at the base of the thumb
