@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FlyingBlind Pocket Scanner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one big product render on a cutting mat, controls under it, then two short columns of notes. */
+:root {
+  --bg: #eef2f0;
+  --ink: #15201b;
+  --muted: #56645d;
+  --line: #d0d9d4;
+  --accent: #0d7246;
+  --stage: #dfe6e2;
+  --tag-bg: rgba(250, 252, 251, 0.92);
+  --tag-ink: #15201b;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1513; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832; --accent: #52c58f;
+    --stage: #18211d; --tag-bg: rgba(20, 28, 24, 0.9); --tag-ink: #eef3f0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1513; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832; --accent: #52c58f;
+  --stage: #18211d; --tag-bg: rgba(20, 28, 24, 0.9); --tag-ink: #eef3f0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-body); }
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-block: 32px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+header { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font: 500 0.78rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(2rem, 6vw, 3rem)/1.05 var(--font-display); font-stretch: 85%; margin: 0; text-wrap: balance; }
+h2 { font: 700 1.2rem/1.2 var(--font-display); font-stretch: 90%; margin: 0; }
+p { margin: 0; max-width: 65ch; }
+.lede { font-size: 1.08rem; color: var(--muted); }
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 74vh;
+  min-height: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--stage);
+  touch-action: none;
+}
+.stage canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.stage canvas:active { cursor: grabbing; }
+.tags { position: absolute; inset: 0; pointer-events: none; }
+.tag {
+  position: absolute;
+  left: 0; top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px 7px;
+  background: var(--tag-bg);
+  color: var(--tag-ink);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  font: 600 0.82rem/1.25 var(--font-body);
+  white-space: nowrap;
+  transform: translate(-50%, calc(-100% - 12px));
+}
+.tag small { font: 400 0.72rem/1.25 var(--font-body); color: var(--muted); }
+.tag::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  width: 1.5px;
+  height: 12px;
+  background: var(--tag-bg);
+}
+.hint {
+  position: absolute;
+  left: 12px; bottom: 10px;
+  font: 500 0.75rem var(--font-mono);
+  color: #f3ecd6;
+  background: rgba(10, 30, 22, 0.55);
+  padding: 4px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+}
+.fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.toolbar button {
+  font: 500 0.88rem var(--font-body);
+  color: var(--ink);
+  background: transparent;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.toolbar button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.toolbar button:hover { border-color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 40px; padding-top: 8px; border-top: 1px solid var(--line); }
+.notes > div { min-width: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 16px; }
+.notes ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; }
+.size { font: 500 0.9rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">FlyingBlind · phone-free version</span>
+    <h1>The pocket scanner</h1>
+    <p class="lede">A phone power bank becomes the handle. The sensor sits at the front, the little computer and the buzzer ride on top, and everything is held on with foam tape. It rests in your palm like a phone. Point it and listen.</p>
+  </header>
+
+  <div class="stage" id="stage">
+    <div class="tags" id="tags"></div>
+    <span class="hint">Drag to turn · scroll or pinch to zoom</span>
+    <div class="fallback" id="fallback" hidden>This picture needs WebGL, which this browser has turned off.</div>
+  </div>
+
+  <div class="toolbar" role="toolbar" aria-label="View controls">
+    <button type="button" id="btn-hand" aria-pressed="true">Hand</button>
+    <button type="button" id="btn-labels" aria-pressed="true">Labels</button>
+    <button type="button" id="btn-beam" aria-pressed="true">Beam</button>
+    <button type="button" id="btn-spin" aria-pressed="true">Turntable</button>
+    <button type="button" id="btn-reset">Reset view</button>
+  </div>
+
+  <div class="notes">
+    <div>
+      <h2>What you're looking at</h2>
+      <p class="size">About 12 × 6.5 × 4 cm · 200–250 g, mostly the power bank</p>
+      <ul>
+        <li><strong>LiDAR sensor</strong> at the front, facing forward, with its two lenses. It measures 100 times a second.</li>
+        <li><strong>ESP32 board</strong>, mounted upside down so the jumper wires push straight onto its pins. No soldering.</li>
+        <li><strong>Buzzer</strong> (the black cylinder on the blue board). It plays the tone: closer is higher.</li>
+        <li><strong>Power bank</strong> as the handle. A short USB cable powers the board, and the bank's button switches it all on.</li>
+        <li>The red cone shows where it's pointing. The real beam is invisible infrared.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Still to settle</h2>
+      <ul>
+        <li>This is a 3D model at true size, not a photo. The hand is an adult's, shown for scale. The real sensor's wire colors and the board's color depend on the seller.</li>
+        <li>The buzzer firmware is written (buzzer on pin 25), but it hasn't been run on a real board yet.</li>
+        <li>Double-sided foam tape isn't on the parts list yet. Any roll will do, about $5.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
+<script>
+(function () {
+  const stage = document.getElementById('stage');
+  const tagsEl = document.getElementById('tags');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  } catch (e) {
+    document.getElementById('fallback').hidden = false;
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.82;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage.prepend(renderer.domElement);
+
+  // Units: 1 = 1 mm. x = front/back (front is +x), y = up, z = side to side.
+  const scene = new THREE.Scene();
+  const device = new THREE.Group(); // the scanner (and the hand holding it)
+  scene.add(device);
+  const LIFT = 115; // how high the hand holds it above the mat
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 3000);
+  let handOn = true;
+  const home = () => {
+    const target = new THREE.Vector3(handOn ? -25 : 0, 18 + (handOn ? LIFT - 8 : 0), handOn ? 4 : 0);
+    const offset = handOn ? new THREE.Vector3(175, 95, 205) : new THREE.Vector3(135, 82, 140);
+    return { target, pos: target.clone().add(offset) };
+  };
+  camera.position.copy(home().pos);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.copy(home().target);
+  controls.enableDamping = true;
+  controls.minDistance = 90;
+  controls.maxDistance = 700;
+  controls.maxPolarAngle = Math.PI * 0.47;
+  controls.autoRotate = !reduceMotion;
+  controls.autoRotateSpeed = 0.7;
+
+  // ---------- lights ----------
+  scene.add(new THREE.HemisphereLight(0xf4f1ea, 0x24443a, 0.35));
+  const sun = new THREE.DirectionalLight(0xfff4e6, 1.35);
+  sun.position.set(90, 220, 120);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left: -240, right: 240, top: 240, bottom: -240, near: 50, far: 800 });
+  sun.shadow.radius = 4;
+  sun.shadow.bias = -0.0004;
+  scene.add(sun);
+
+  // ---------- helpers ----------
+  const mat = (o) => new THREE.MeshPhysicalMaterial(o);
+  function add(geo, material, x, y, z, { cast = true, receive = true } = {}) {
+    const m = new THREE.Mesh(geo, material);
+    m.position.set(x, y, z);
+    m.castShadow = cast;
+    m.receiveShadow = receive;
+    device.add(m);
+    return m;
+  }
+  const rbox = (w, h, d, r) => new THREE.RoundedBoxGeometry(w, h, d, 4, r);
+
+  const M = {
+    bank: mat({ color: 0x1d2024, roughness: 0.5, metalness: 0.1, clearcoat: 0.15, clearcoatRoughness: 0.5 }),
+    metal: mat({ color: 0xd5d9de, roughness: 0.25, metalness: 1 }),
+    gold: mat({ color: 0xd9b24a, roughness: 0.3, metalness: 1 }),
+    black: mat({ color: 0x111214, roughness: 0.6 }),
+    plastic: mat({ color: 0x0b0b0c, roughness: 0.45 }),
+    sensor: mat({ color: 0x17191c, roughness: 0.6, metalness: 0.05 }),
+    lens: mat({ color: 0x1a1030, roughness: 0.05, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.02 }),
+    lensRing: mat({ color: 0x3a3d44, roughness: 0.35, metalness: 0.6 }),
+    foam: mat({ color: 0xeee3c0, roughness: 0.95 }),
+    blueBoard: mat({ color: 0x23469a, roughness: 0.5, clearcoat: 0.3 }),
+    buzzer: mat({ color: 0x0e0e0f, roughness: 0.35, clearcoat: 0.6 }),
+    cable: mat({ color: 0xe6e6e6, roughness: 0.5 }),
+    plug: mat({ color: 0x2c2f34, roughness: 0.5 }),
+    led: new THREE.MeshStandardMaterial({ color: 0x7fd7ff, emissive: 0x4fc3ff, emissiveIntensity: 1.6 }),
+    ledOff: mat({ color: 0x30343a, roughness: 0.4 }),
+  };
+
+  // ---------- cutting mat ----------
+  function matTexture() {
+    const W = 2400, H = 1600, PX = 4; // 4 px per mm -> 600 x 400 mm
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const g = c.getContext('2d');
+    g.fillStyle = '#17483a';
+    g.fillRect(0, 0, W, H);
+    for (let mm = 0; mm <= 600; mm += 10) {
+      const major = mm % 50 === 0;
+      g.strokeStyle = major ? 'rgba(170,220,195,0.45)' : 'rgba(150,205,180,0.22)';
+      g.lineWidth = major ? 2.5 : 1.2;
+      g.beginPath(); g.moveTo(mm * PX, 0); g.lineTo(mm * PX, H); g.stroke();
+      if (mm <= 400) { g.beginPath(); g.moveTo(0, mm * PX); g.lineTo(W, mm * PX); g.stroke(); }
+    }
+    g.fillStyle = 'rgba(232, 210, 120, 0.85)';
+    g.font = '500 22px "IBM Plex Mono", monospace';
+    for (let cm = 0; cm <= 60; cm++) g.fillText(String(cm), cm * 10 * PX + 6, 30);
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  }
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 400), new THREE.MeshStandardMaterial({ map: matTexture(), roughness: 0.92 }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(20, 0, 30);
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // ---------- power bank: 100 x 15 x 65 mm ----------
+  add(rbox(100, 15, 65, 5), M.bank, 0, 7.5, 0);
+  [-0, 1, 2, 3].forEach((i) => add(new THREE.CylinderGeometry(0.9, 0.9, 0.6, 16), i < 3 ? M.led : M.ledOff, -43, 15.1, 4 + i * 4, { cast: false }));
+  add(new THREE.CylinderGeometry(2.6, 2.6, 0.8, 24), M.plastic, -43, 15.2, 25);
+  add(new THREE.BoxGeometry(1, 5, 13), M.plastic, -50.1, 7.5, -10, { cast: false });
+
+  // ---------- foam tape pads ----------
+  add(new THREE.BoxGeometry(18, 1.5, 26), M.foam, 6.5, 15.75, -13);
+  add(new THREE.BoxGeometry(13.5, 1.5, 35), M.foam, 45.75, 15.75, 0);
+  add(new THREE.BoxGeometry(33, 1.5, 13), M.foam, -10.5, 15.75, 19.5);
+
+  // ---------- ESP32 DevKit, upside down (pins up) ----------
+  const B = { x0: -36, z0: -27, len: 51.5, wid: 28, y: 19.5, t: 1.6 };
+  const pinX = (i) => B.x0 + 3 + i * 2.54;
+  const rowA = B.z0 + 1.3, rowB = B.z0 + B.wid - 1.3;
+  const labelsA = ['5V', 'CMD', 'D3', 'D2', '13', 'GND', '12', '14', '27', '26', '25', '33', '32', '35', '34', 'VN', 'VP', 'EN', '3V3'];
+  const labelsB = ['CLK', 'D0', 'D1', '15', '2', '0', '4', '16', '17', '5', '18', '19', 'GND', '21', 'RX', 'TX', '22', '23', 'GND'];
+
+  function pcbTexture() {
+    const S = 20; // px per mm
+    const c = document.createElement('canvas');
+    c.width = B.len * S; c.height = B.wid * S;
+    const g = c.getContext('2d');
+    g.fillStyle = '#14171c';
+    g.fillRect(0, 0, c.width, c.height);
+    // copper pour texture
+    g.fillStyle = 'rgba(255,255,255,0.025)';
+    for (let i = 0; i < 26; i++) g.fillRect(60 + i * 36, 120, 18, 320);
+    // vias
+    g.fillStyle = '#a88f4a';
+    let s = 7;
+    const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+    for (let i = 0; i < 70; i++) { g.beginPath(); g.arc(80 + rnd() * 860, 130 + rnd() * 300, 3, 0, 7); g.fill(); }
+    // mounting holes
+    for (const [x, y] of [[40, 40], [c.width - 40, 40], [40, c.height - 40], [c.width - 40, c.height - 40]]) {
+      g.beginPath(); g.arc(x, y, 26, 0, 7); g.fillStyle = '#b39549'; g.fill();
+      g.beginPath(); g.arc(x, y, 17, 0, 7); g.fillStyle = '#050607'; g.fill();
+    }
+    // silkscreen
+    g.fillStyle = 'rgba(240,240,240,0.9)';
+    g.font = '600 46px "IBM Plex Mono", monospace';
+    g.textAlign = 'center';
+    g.fillText('ESP32-DevKitC', c.width / 2 + 40, c.height / 2 + 6);
+    g.font = '500 30px "IBM Plex Mono", monospace';
+    g.fillStyle = 'rgba(240,240,240,0.6)';
+    g.fillText('WROOM-32 · 38 PIN', c.width / 2 + 40, c.height / 2 + 48);
+    g.font = '500 17px "IBM Plex Mono", monospace';
+    g.fillStyle = 'rgba(240,240,240,0.85)';
+    labelsA.forEach((t, i) => g.fillText(t, (3 + i * 2.54) * S, 4.6 * S));
+    labelsB.forEach((t, i) => g.fillText(t, (3 + i * 2.54) * S, (B.wid - 3.6) * S));
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return tex;
+  }
+  const pcbSide = mat({ color: 0x14171c, roughness: 0.6 });
+  const pcbTop = new THREE.MeshPhysicalMaterial({ map: pcbTexture(), roughness: 0.55, clearcoat: 0.25 });
+  add(new THREE.BoxGeometry(B.len, B.t, B.wid), [pcbSide, pcbSide, pcbTop, pcbSide, pcbSide, pcbSide], B.x0 + B.len / 2, B.y + B.t / 2, B.z0 + B.wid / 2);
+  // module shield underneath (rests on the foam)
+  add(new THREE.BoxGeometry(18, 3, 25.5), M.metal, 6.5, 18, -13);
+  // USB-C socket on the board's back end
+  add(rbox(4, 3.2, 9, 1.2), M.metal, B.x0 - 0.5, B.y + 0.8, B.z0 + B.wid / 2);
+  // header strips + pins
+  const yTop = B.y + B.t;
+  for (const z of [rowA, rowB]) {
+    add(new THREE.BoxGeometry(19 * 2.54, 2.5, 2.54), M.plastic, B.x0 + 3 + 9 * 2.54, yTop + 1.25, z);
+    for (let i = 0; i < 19; i++) add(new THREE.BoxGeometry(0.64, 6, 0.64), M.gold, pinX(i), yTop + 2.5 + 3, z, { receive: false });
+  }
+
+  // ---------- buzzer module ----------
+  add(new THREE.BoxGeometry(33, 1.6, 13), M.blueBoard, -10.5, 17.3, 19.5);
+  add(new THREE.CylinderGeometry(6, 6, 9.5, 48), M.buzzer, -18, 18.1 + 4.75, 19.5);
+  add(new THREE.CylinderGeometry(1.1, 1.1, 0.3, 20), M.plastic, -18, 22.9 + 4.75, 19.5, { cast: false });
+  add(new THREE.BoxGeometry(3.5, 1.4, 1.6), M.plastic, -4, 18.8, 16);
+  add(new THREE.BoxGeometry(2.6, 2.4, 1.8), M.plastic, -4, 19.3, 22.5);
+  const buzPins = [17, 19.5, 22];
+  for (const z of buzPins) {
+    add(new THREE.BoxGeometry(2.5, 2.5, 2.5), M.plastic, 5.5, 19.4, z);
+    add(new THREE.BoxGeometry(6, 0.64, 0.64), M.gold, 9.5, 19.4, z);
+    add(new THREE.BoxGeometry(14, 2.5, 2.5), M.plastic, 14, 19.4, z); // Dupont housings on the pins
+  }
+
+  // ---------- TF-Luna sensor, 13.5 x 21.25 x 35 mm, facing +x ----------
+  const SX = 45.75, SY = 16.5 + 21.25 / 2;
+  add(rbox(13.5, 21.25, 35, 1.4), M.sensor, SX, SY, 0);
+  for (const z of [-8, 8]) {
+    const ring = add(new THREE.CylinderGeometry(5.6, 5.6, 1.2, 48), M.lensRing, SX + 6.9, SY + 1, z);
+    ring.rotation.z = Math.PI / 2;
+    const lens = add(new THREE.SphereGeometry(4.6, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2.6), M.lens, SX + 6.9, SY + 1, z, { cast: false });
+    lens.rotation.z = -Math.PI / 2;
+    lens.scale.set(1, 0.35, 1);
+  }
+  add(new THREE.BoxGeometry(2.5, 5, 9), mat({ color: 0xece6d2, roughness: 0.6 }), SX - 7.8, SY - 1, 0);
+
+  // ---------- wires ----------
+  function wire(points, color, r = 0.65) {
+    const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)));
+    add(new THREE.TubeGeometry(curve, 90, r, 10, false), mat({ color, roughness: 0.45, clearcoat: 0.3 }), 0, 0, 0);
+  }
+  const housingTop = yTop + 2.5 + 1 + 14;
+  function housing(x, z) { add(new THREE.BoxGeometry(2.5, 14, 2.5), M.plastic, x, yTop + 2.5 + 1 + 7, z); }
+
+  const pinWire = (x, z, from, mid, color) =>
+    wire([from, mid, [x + (from[0] > x ? 4 : -4), housingTop + 9, z], [x, housingTop + 2, z], [x, housingTop - 0.5, z]], color);
+
+  // sensor -> board (5V, GND, TX -> G16, RX -> G17)
+  const conn = (dy, dz) => [SX - 9, SY - 1 + dy, dz];
+  pinWire(pinX(0), rowA, conn(1.5, -3), [20, 46, -20], 0xd13a2c);
+  pinWire(pinX(5), rowA, conn(1.5, -1), [22, 43, -16], 0x1a1a1a);
+  pinWire(pinX(7), rowB, conn(-1.5, 1), [20, 42, 2], 0x2fa34a);
+  pinWire(pinX(8), rowB, conn(-1.5, 3), [22, 45, 5], 0xf2f2f2);
+  // the sensor's two unused wires, folded back and taped down
+  wire([conn(0, -4), [32, 22, -12], [28, 17.2, -17]], 0x2f6fd6, 0.55);
+  wire([conn(0, 4), [32, 22, 12], [28, 17.2, 17]], 0x7c4fc4, 0.55);
+  add(new THREE.BoxGeometry(5, 2.5, 2.5), M.plastic, 26, 17.2, -17);
+  add(new THREE.BoxGeometry(5, 2.5, 2.5), M.plastic, 26, 17.2, 17);
+  // buzzer -> board (S -> G25, + -> 3V3, - -> GND)
+  pinWire(pinX(10), rowA, [21, 19.4, 17], [27, 34, 4], 0xf0a020);
+  pinWire(pinX(18), rowA, [21, 19.4, 19.5], [30, 38, 2], 0xd13a2c);
+  pinWire(pinX(12), rowB, [21, 19.4, 22], [26, 32, 12], 0x1a1a1a);
+  for (const [i, z] of [[0, rowA], [5, rowA], [10, rowA], [18, rowA], [7, rowB], [8, rowB], [12, rowB]]) housing(pinX(i), z);
+
+  // ---------- USB cable: bank's USB-A port -> board's USB-C ----------
+  add(new THREE.BoxGeometry(5, 4.5, 12), M.metal, -52.5, 7.5, -10);
+  add(rbox(13, 7.5, 15, 2), M.plug, -61, 7.5, -10);
+  add(rbox(10, 5.5, 9, 1.5), M.plug, B.x0 - 7, B.y + 0.8, B.z0 + B.wid / 2);
+  wire([[-67, 7.5, -10], [-82, 9, -22], [-78, 22, -34], [-60, 24, -26], [-48, B.y + 0.8, -13]], 0xe6e6e6, 1.6);
+
+  // ---------- beam (illustration: the real one is invisible) ----------
+  const beamLen = 260;
+  const beamGeo = new THREE.CylinderGeometry(4.6 + beamLen * Math.tan(Math.PI / 180), 4.6, beamLen, 40, 1, true);
+  beamGeo.rotateZ(-Math.PI / 2);
+  beamGeo.translate(beamLen / 2, 0, 0);
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0xff4a2e, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide });
+  const beam = new THREE.Group();
+  [-8, 8].forEach((z) => {
+    const b = new THREE.Mesh(beamGeo, beamMat);
+    b.position.set(SX + 7.5, SY + 1, z);
+    beam.add(b);
+  });
+  device.add(beam);
+
+  // ---------- hand (left hand, palm under the power bank) ----------
+  const hand = new THREE.Group();
+  device.add(hand);
+  const skin = new THREE.MeshPhysicalMaterial({
+    color: 0xb87652, roughness: 0.55, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffc9b0), clearcoat: 0.08,
+  });
+  const nailMat = new THREE.MeshPhysicalMaterial({ color: 0xd9a08c, roughness: 0.25, clearcoat: 0.8 });
+  const sleeveMat = new THREE.MeshPhysicalMaterial({ color: 0x2c3a55, roughness: 0.9, sheen: 0.6, sheenColor: new THREE.Color(0x6d7ea3) });
+  const V = (a) => new THREE.Vector3(...a);
+  const UP = new THREE.Vector3(0, 1, 0);
+  function put(mesh) { mesh.castShadow = true; mesh.receiveShadow = true; hand.add(mesh); return mesh; }
+  function capsule(a, b, r, material = skin) {
+    const A = V(a), B = V(b);
+    const m = put(new THREE.Mesh(new THREE.CapsuleGeometry(r, A.distanceTo(B), 10, 24), material));
+    m.position.copy(A).add(B).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(UP, B.clone().sub(A).normalize());
+    return m;
+  }
+  function cone(a, b, rA, rB, material) {
+    const A = V(a), B = V(b);
+    const m = put(new THREE.Mesh(new THREE.CylinderGeometry(rB, rA, A.distanceTo(B), 40), material));
+    m.position.copy(A).add(B).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(UP, B.clone().sub(A).normalize());
+    return m;
+  }
+  function blob(c, sc, material = skin) {
+    const m = put(new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), material));
+    m.position.set(...c);
+    m.scale.set(...sc);
+    return m;
+  }
+  function nail(tip, out, r) {
+    const T = V(tip), O = V(out).normalize();
+    const m = put(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), nailMat));
+    m.scale.set(r * 0.72, r * 0.85, r * 0.22);
+    m.position.copy(T).addScaledVector(O, r * 0.82);
+    m.lookAt(m.position.clone().add(O));
+  }
+  // a finger is a chain of points with a radius for each segment
+  function finger(points, radii, out) {
+    for (let i = 0; i < points.length - 1; i++) capsule(points[i], points[i + 1], radii[i]);
+    nail(points[points.length - 1], out, radii[radii.length - 1]);
+  }
+
+  // palm, heel of the hand, and the pad at the base of the thumb
+  blob([-24, -12.5, 6], [40, 12, 34]);
+  blob([-50, -14, 14], [17, 12.5, 22]);
+  blob([-38, -12, -21], [25, 13, 17]);
+  // fingers curl up around the right-hand side of the power bank
+  finger([[-3, -12, 16], [-3, -9.5, 34], [-1, 6, 41.5], [3, 21.5, 38.5]], [8.4, 8, 7], [0.2, 0.75, 0.6]);
+  finger([[-21, -12, 17], [-21, -10, 34.5], [-20, 6, 42.2], [-18, 22.5, 39]], [8.9, 8.4, 7.3], [0.1, 0.75, 0.6]);
+  finger([[-38, -12, 17], [-38, -9.5, 34], [-38, 6, 41.5], [-37, 21, 38.5]], [8.5, 8, 7], [0, 0.75, 0.6]);
+  finger([[-53, -12, 17], [-54, -8.5, 33], [-55, 4, 39.5], [-55, 15.5, 39]], [7.4, 7, 6.2], [-0.2, 0.5, 0.8]);
+  // thumb rests along the left-hand side, clear of the board and its wires
+  finger([[-42, -12, -18], [-31, -6, -36], [-18, 4, -42.5], [-5, 12, -42]], [10.5, 9.8, 8.6], [0.3, 0.35, -0.9]);
+  // wrist and forearm, going back and down
+  capsule([-60, -15, 6], [-96, -25, 7], 23);
+  cone([-96, -25, 7], [-300, -78, 12], 24.5, 31, skin);
+  // sleeve
+  cone([-165, -42, 9], [-330, -86, 13], 34, 37, sleeveMat);
+  cone([-163, -41.5, 9], [-170, -43.3, 9.2], 35.5, 35.5, sleeveMat);
+
+  // ---------- labels ----------
+  const TAGS = [
+    { at: [SX, SY + 13, -12], title: 'LiDAR sensor', sub: 'Measures 100× a second' },
+    { at: [-14, housingTop + 6, -27], title: 'ESP32 board', sub: 'Upside down, wires push on' },
+    { at: [-18, 31, 19.5], title: 'Buzzer', sub: 'Plays the tone' },
+    { at: [-30, 15, 32.5], title: 'Power bank', sub: 'The handle and on switch' },
+    { at: [-80, 26, -34], title: 'USB cable', sub: 'Powers the board' },
+    { at: [190, SY + 8, 0], title: 'Infrared beam', sub: 'Invisible in real life', beam: true },
+  ].map((t) => {
+    const el = document.createElement('div');
+    el.className = 'tag';
+    el.innerHTML = `${t.title}<small>${t.sub}</small>`;
+    tagsEl.appendChild(el);
+    return { ...t, el, v: new THREE.Vector3(...t.at) };
+  });
+
+  let showLabels = true;
+  function placeTags(w, h) {
+    for (const t of TAGS) {
+      const visible = showLabels && (!t.beam || beam.visible);
+      const p = device.localToWorld(t.v.clone()).project(camera);
+      const onScreen = p.z < 1 && Math.abs(p.x) < 1.1 && Math.abs(p.y) < 1.1;
+      t.el.hidden = !(visible && onScreen);
+      if (!t.el.hidden) t.el.style.transform = `translate(${((p.x + 1) / 2) * w}px, ${((1 - p.y) / 2) * h}px) translate(-50%, calc(-100% - 12px))`;
+    }
+  }
+
+  scene.traverse((o) => {
+    if (!o.isMesh) return;
+    for (const m of [].concat(o.material)) if ('envMapIntensity' in m) m.envMapIntensity = 0.55;
+  });
+
+  // ---------- sizing + loop ----------
+  let W = 1, H = 1;
+  function resize() {
+    W = stage.clientWidth; H = stage.clientHeight;
+    renderer.setSize(W, H, false);
+    camera.aspect = W / H;
+    // pull back a little on narrow screens so the whole scanner fits
+    camera.fov = W / H < 1.2 ? 44 : 32;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  renderer.setAnimationLoop(() => {
+    controls.update();
+    renderer.render(scene, camera);
+    placeTags(W, H);
+  });
+
+  // ---------- controls ----------
+  const btn = (id) => document.getElementById(id);
+  function toggle(id, on) { btn(id).setAttribute('aria-pressed', String(on)); }
+  toggle('btn-spin', controls.autoRotate);
+  btn('btn-labels').addEventListener('click', () => { showLabels = !showLabels; toggle('btn-labels', showLabels); });
+  btn('btn-beam').addEventListener('click', () => { beam.visible = !beam.visible; toggle('btn-beam', beam.visible); });
+  btn('btn-spin').addEventListener('click', () => { controls.autoRotate = !controls.autoRotate; toggle('btn-spin', controls.autoRotate); });
+  function resetView() { const h = home(); camera.position.copy(h.pos); controls.target.copy(h.target); }
+  btn('btn-reset').addEventListener('click', resetView);
+  function setHand(on) {
+    handOn = on;
+    hand.visible = on;
+    device.position.y = on ? LIFT : 0;
+    toggle('btn-hand', on);
+    resetView();
+  }
+  btn('btn-hand').addEventListener('click', () => setHand(!handOn));
+  setHand(true);
+  controls.addEventListener('start', () => { controls.autoRotate = false; toggle('btn-spin', false); });
+})();
+</script>
+
+</body>
+</html>

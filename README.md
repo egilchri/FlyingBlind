@@ -87,6 +87,10 @@ When nothing is in range, or the return is too weak, the device sends "no target
 silent. In speech mode the stream is shown on screen but only spoken when you press **Measure**. The
 log shows the actual reading rate every 5 seconds, so you can check the Bluetooth link is keeping up.
 
+A 3D picture of the phone-free version, held in a hand, is in `docs/pocket-scanner.html`. Open it
+in a browser (or at `https://egilchri.github.io/FlyingBlind/docs/pocket-scanner.html`) and drag to
+turn it.
+
 Note: the sensor's beam is infrared and invisible, and it is wider than a laser meter's dot (about
 2° for the TF-Luna), so it reads the nearest large surface rather than a pinpoint.
 
