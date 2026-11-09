@@ -87,6 +87,9 @@ When nothing is in range, or the return is too weak, the device sends "no target
 silent. In speech mode the stream is shown on screen but only spoken when you press **Measure**. The
 log shows the actual reading rate every 5 seconds, so you can check the Bluetooth link is keeping up.
 
+The parts list, wiring diagram and build steps are in `docs/lidar-parts.html` (online at
+`https://egilchri.github.io/FlyingBlind/docs/lidar-parts.html`).
+
 A 3D picture of the phone-free version, held in a hand, is in `docs/pocket-scanner.html`. Open it
 in a browser (or at `https://egilchri.github.io/FlyingBlind/docs/pocket-scanner.html`) and drag to
 turn it.

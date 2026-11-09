@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FlyingBlind LiDAR Parts List</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single-column bill of materials, like a parts sheet in a kit box. Each part is a row with a checkbox, price and search term. */
+:root {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --ink: #15201b;
+  --muted: #56645d;
+  --line: #d3dcd7;
+  --accent: #0d7246;       /* solder-mask green */
+  --accent-soft: #e1efe7;
+  --copper: #9a5420;       /* warnings: things to check before buying */
+  --copper-soft: #f7ebe0;
+  --pcb: #1c2a24;          /* wiring diagram */
+  --pcb-ink: #dfe9e3;
+  --wire-pwr: #d33a2c;
+  --wire-gnd: #1d1f22;
+  --wire-tx: #1f9a49;
+  --wire-rx: #2f6fd6;
+  --wire-sig: #e08a0b;
+  --wire-usb: #8a949c;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1513; --surface: #17201c; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832;
+    --accent: #52c58f; --accent-soft: #1b3027; --copper: #e3a06a; --copper-soft: #33251a;
+    --pcb: #22322b; --wire-gnd: #9aa3ad; --wire-usb: #c3cbd2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1513; --surface: #17201c; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832;
+  --accent: #52c58f; --accent-soft: #1b3027; --copper: #e3a06a; --copper-soft: #33251a;
+    --pcb: #22322b; --wire-gnd: #9aa3ad; --wire-usb: #c3cbd2;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+}
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+header { display: flex; flex-direction: column; gap: 12px; }
+.eyebrow {
+  font: 500 0.78rem/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+h1 {
+  font: 800 clamp(2rem, 6vw, 2.9rem)/1.05 var(--font-display);
+  font-stretch: 85%;
+  margin: 0;
+  text-wrap: balance;
+}
+h2 {
+  font: 700 1.35rem/1.2 var(--font-display);
+  font-stretch: 90%;
+  margin: 0;
+  text-wrap: balance;
+}
+p { margin: 0; max-width: 65ch; }
+.lede { font-size: 1.08rem; color: var(--muted); }
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  padding: 16px 0;
+  border-block: 1px solid var(--line);
+}
+.summary div { display: flex; flex-direction: column; gap: 2px; }
+.summary dt { font: 500 0.75rem/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.summary dd { margin: 0; font: 700 1.25rem/1.2 var(--font-display); font-variant-numeric: tabular-nums; }
+
+section { display: flex; flex-direction: column; gap: 16px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.progress { font: 500 0.85rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.parts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.part { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; padding: 18px 18px 20px; }
+.part + .part { border-top: 1px solid var(--line); }
+.part input[type="checkbox"] { width: 22px; height: 22px; margin: 3px 0 0; accent-color: var(--accent); cursor: pointer; }
+.part-body { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.part-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.part-name { font: 600 1.08rem/1.3 var(--font-body); cursor: pointer; }
+.price { font: 500 0.95rem var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.part.done .part-name { text-decoration: line-through; text-decoration-color: var(--muted); color: var(--muted); }
+
+.search { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.search-label { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.term {
+  font: 500 0.92rem/1.3 var(--font-mono);
+  background: var(--accent-soft);
+  color: var(--ink);
+  padding: 5px 9px;
+  border-radius: 6px;
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+.copy {
+  font: 500 0.8rem var(--font-mono);
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.copy:hover { background: var(--accent-soft); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.notes { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; color: var(--ink); }
+.notes li { max-width: 62ch; }
+.check { color: var(--copper); font-weight: 600; }
+
+.callout {
+  background: var(--copper-soft);
+  border: 1px solid color-mix(in srgb, var(--copper) 35%, transparent);
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.callout h3 { margin: 0; font: 700 1rem var(--font-display); color: var(--copper); }
+
+.pins-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 440px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.mono { font-family: var(--font-mono); font-size: 0.92rem; }
+
+.diagram-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.wiring { display: block; width: 100%; min-width: 640px; height: auto; font-family: var(--font-mono); }
+.wiring .pcb { fill: var(--pcb); }
+.wiring .module { fill: #b9c0c7; }
+.wiring .antenna { fill: none; stroke: #c9a646; stroke-width: 2; }
+.wiring .usb { fill: #c9ced4; stroke: #8a929a; }
+.wiring .pcb-title { fill: var(--pcb-ink); font-size: 15px; font-weight: 500; letter-spacing: 0.06em; opacity: 0.75; }
+.wiring .pcb-small { fill: var(--pcb-ink); font-size: 10px; opacity: 0.6; }
+.wiring .pin { fill: #6f6a55; }
+.wiring .pin-used { fill: #e3bc4c; stroke: var(--surface); stroke-width: 1.5; }
+.wiring .pinlabel { fill: var(--pcb-ink); font-size: 10.5px; opacity: 0.45; }
+.wiring .pinlabel-used { fill: var(--pcb-ink); font-size: 12px; font-weight: 500; }
+.wiring .slabel { fill: var(--ink); font-size: 12px; font-weight: 500; }
+.wiring .slabel-dim { fill: var(--muted); font-size: 11px; }
+.wiring .part-box { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.wiring .part-title { fill: var(--ink); font: 600 14px var(--font-body); }
+.wiring .part-sub, .wiring .note { fill: var(--muted); font-size: 11px; }
+.wiring .lens-ring { fill: #2a2d31; }
+.wiring .lens { fill: #3b2a66; }
+.wiring .nc { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 3 3; }
+.wiring .buzz-pcb { fill: #2a4fa3; }
+.wiring .buzzer { fill: #111; }
+.wiring .buzzer-hole { fill: #444; }
+.wiring .buzz-label { fill: #ffffff; font-size: 13px; font-weight: 500; }
+.wiring .bank { fill: #2b2f35; }
+.wiring .bank-title { fill: #f1f3f5; font: 600 13px var(--font-body); }
+.wiring .bank-sub { fill: #aab2ba; font-size: 10.5px; }
+.wiring .w, .wiring .w-outline { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.wiring .w { stroke-width: 4; }
+.wiring .w-outline { stroke: var(--surface); stroke-width: 9; }
+.wiring .w-pwr { stroke: var(--wire-pwr); }
+.wiring .w-gnd { stroke: var(--wire-gnd); }
+.wiring .w-tx { stroke: var(--wire-tx); }
+.wiring .w-rx { stroke: var(--wire-rx); }
+.wiring .w-sig { stroke: var(--wire-sig); }
+.wiring .w-usb { stroke: var(--wire-usb); stroke-width: 7; }
+.wiring .tag text { fill: #ffffff; font-size: 11px; font-weight: 500; }
+.wiring .t-pwr rect { fill: var(--wire-pwr); }
+.wiring .t-gnd rect { fill: #3a3f45; }
+.wiring .t-tx rect { fill: var(--wire-tx); }
+.wiring .t-rx rect { fill: var(--wire-rx); }
+.wiring .t-sig rect { fill: #b86d00; }
+.wiring .t-usb rect { fill: #6c757d; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: 0.9rem; }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.legend i { width: 22px; height: 5px; border-radius: 3px; display: inline-block; }
+
+.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.steps li { max-width: 62ch; }
+
+footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+footer a { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">FlyingBlind · real-time scanner</span>
+    <h1>LiDAR scanner parts list</h1>
+    <p class="lede">Everything needed to build the handheld scanner that lets you wave it around and hear distance as a tone. It all plugs together, so no soldering is needed.</p>
+  </header>
+
+  <dl class="summary">
+    <div><dt>Expected total</dt><dd>$40–55</dd></div>
+    <div><dt>Soldering</dt><dd>None</dd></div>
+    <div><dt>Speed</dt><dd>~50 readings/s</dd></div>
+    <div><dt>Range</dt><dd>0.2–8 m</dd></div>
+  </dl>
+
+  <section aria-labelledby="buy">
+    <div class="section-head">
+      <h2 id="buy">What to buy</h2>
+      <span class="progress" id="progress" aria-live="polite"></span>
+    </div>
+    <p>Tick items off as you order them. Your ticks are saved in this browser only. Copy each search term into Amazon.</p>
+
+    <ul class="parts">
+      <li class="part" data-id="lidar">
+        <input type="checkbox" id="p-lidar" aria-labelledby="n-lidar">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-lidar" for="p-lidar">TF-Luna LiDAR distance sensor</label><span class="price">$20–30</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">TF-Luna LiDAR Benewake</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>The distance sensor itself. It measures 100 times a second, about the size of a sugar cube.</li>
+            <li><span class="check">Check:</span> the listing says it <strong>includes a cable with Dupont ends</strong>. Sellers vary.</li>
+            <li>A TFmini-S also works. Other sensors won't, because the firmware only understands these two.</li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="part" data-id="adapter">
+        <input type="checkbox" id="p-adapter" aria-labelledby="n-adapter">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-adapter" for="p-adapter">Sensor adapter cable <em>(only if needed)</em></label><span class="price">$3–8</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">1.25mm 6 pin to Dupont cable TF-Luna</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>Only buy this if the sensor comes with no cable, or one with bare wire ends.</li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="part" data-id="esp32">
+        <input type="checkbox" id="p-esp32" aria-labelledby="n-esp32">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-esp32" for="p-esp32">ESP32 development board</label><span class="price">$8–15</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">ESP32-WROOM-32 DevKit USB-C</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>The tiny computer with Bluetooth that reads the sensor and talks to the phone.</li>
+            <li><span class="check">Check:</span> it's a plain <strong>ESP32 (WROOM-32)</strong>, not an ESP32-C3 or ESP32-S3.</li>
+            <li><span class="check">Check:</span> the photos show <strong>pins already soldered on</strong> underneath.</li>
+            <li>A 2- or 3-pack costs little more and gives you a spare.</li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="part" data-id="wires">
+        <input type="checkbox" id="p-wires" aria-labelledby="n-wires">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-wires" for="p-wires">Jumper wires</label><span class="price">~$5</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">Dupont jumper wires female to female</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>A mixed pack (female–female, male–female, male–male) covers any surprises.</li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="part" data-id="usb">
+        <input type="checkbox" id="p-usb" aria-labelledby="n-usb">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-usb" for="p-usb">USB cable</label><span class="price">$0–5</span></div>
+          <ul class="notes">
+            <li>Matches the board's socket (USB-C if you followed the search above).</li>
+            <li><span class="check">Check:</span> it must carry <strong>data</strong>, not just charge. If the Mac can't see the board, try another cable first.</li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="part" data-id="power">
+        <input type="checkbox" id="p-power" aria-labelledby="n-power">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-power" for="p-power">USB power bank</label><span class="price">$0–15</span></div>
+          <ul class="notes">
+            <li>Any phone power bank you already own. It becomes the handle, and the other parts are stuck on top of it.</li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="part" data-id="foam">
+        <input type="checkbox" id="p-foam" aria-labelledby="n-foam">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-foam" for="p-foam">Double-sided foam tape</label><span class="price">~$5</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">double sided foam mounting tape</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>Holds the sensor, the board and the buzzer onto the power bank.</li>
+            <li>Thick foam (about 1–2 mm) works best. It cushions the parts and keeps the board's pins from touching the power bank.</li>
+            <li>It peels off later, so you can rearrange things.</li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="optional">
+    <h2 id="optional">Optional: phone-free version</h2>
+    <p>Add a buzzer and the scanner plays the tone itself, so it works with an iPhone or no phone at all. The firmware already supports it. Wire the buzzer's S pin to GPIO 25, + to 3V3, and − to GND.</p>
+    <ul class="parts">
+      <li class="part" data-id="buzzer">
+        <input type="checkbox" id="p-buzzer" aria-labelledby="n-buzzer">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-buzzer" for="p-buzzer">Passive buzzer module</label><span class="price">$2–6</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">passive piezo buzzer module 3 pin</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li><span class="check">Check:</span> it says <strong>passive</strong> (an active buzzer only plays one note) and comes as a <strong>module with pins</strong>, so it plugs in without soldering.</li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="wiring">
+    <h2 id="wiring">Wiring diagram</h2>
+    <p>This is the buzzer version. Seven wires, all push-on jumpers. Find each pin by the name printed beside it on the board. Pin positions vary between sellers, and the board is mounted upside down, so don't go by position.</p>
+    <div class="diagram-scroll"><svg viewBox="0 0 960 700" class="wiring" role="img" aria-labelledby="wd-title wd-desc" xmlns="http://www.w3.org/2000/svg"><title id="wd-title">Wiring diagram, buzzer version</title><desc id="wd-desc">TF-Luna pin 1 +5V to ESP32 5V; pin 4 GND to ESP32 GND; pin 3 TXD to GPIO 16; pin 2 RXD to GPIO 17; pins 5 and 6 unconnected. Buzzer S to GPIO 25, plus to 3V3, minus to GND. USB power bank to the board's USB socket.</desc><rect x="380" y="60" width="200" height="530" rx="10" class="pcb"/><rect x="428" y="68" width="104" height="36" rx="3" class="module"/><path d="M438 74 h12 v14 h10 v-14 h10 v14 h10 v-14 h10 v14 h10 v-14 h12" class="antenna"/><text x="480" y="360" class="pcb-title" transform="rotate(-90 480 360)" text-anchor="middle">ESP32 DevKit · WROOM-32</text><rect x="458" y="582" width="44" height="18" rx="4" class="usb"/><text x="480" y="576" class="pcb-small" text-anchor="middle">USB</text><path d="M210 420 L300 420 L300 544 L404 544" class="w-outline"/><path d="M210 420 L300 420 L300 544 L404 544" class="w w-pwr"/><path d="M210 492 L330 492 L330 424 L404 424" class="w-outline"/><path d="M210 492 L330 492 L330 424 L404 424" class="w w-gnd"/><path d="M210 468 L250 468 L250 610 L610 610 L610 376 L556 376" class="w-outline"/><path d="M210 468 L250 468 L250 610 L610 610 L610 376 L556 376" class="w w-tx"/><path d="M210 444 L270 444 L270 626 L626 626 L626 352 L556 352" class="w-outline"/><path d="M210 444 L270 444 L270 626 L626 626 L626 352 L556 352" class="w w-rx"/><path d="M740 112 L556 112" class="w-outline"/><path d="M740 112 L556 112" class="w w-gnd"/><path d="M740 136 L700 136 L700 40 L350 40 L350 112 L404 112" class="w-outline"/><path d="M740 136 L700 136 L700 40 L350 40 L350 112 L404 112" class="w w-pwr"/><path d="M740 160 L680 160 L680 24 L336 24 L336 304 L404 304" class="w-outline"/><path d="M740 160 L680 160 L680 24 L336 24 L336 304 L404 304" class="w w-sig"/><path d="M480 600 L480 656 L690 656" class="w-outline"/><path d="M480 600 L480 656 L690 656" class="w w-usb"/><circle cx="404" cy="112" r="5.5" class="pin-used"/><text x="416" y="116" class="pinlabel-used">3V3</text><circle cx="404" cy="136" r="4" class="pin"/><text x="416" y="140" class="pinlabel">EN</text><circle cx="404" cy="160" r="4" class="pin"/><text x="416" y="164" class="pinlabel">VP</text><circle cx="404" cy="184" r="4" class="pin"/><text x="416" y="188" class="pinlabel">VN</text><circle cx="404" cy="208" r="4" class="pin"/><text x="416" y="212" class="pinlabel">34</text><circle cx="404" cy="232" r="4" class="pin"/><text x="416" y="236" class="pinlabel">35</text><circle cx="404" cy="256" r="4" class="pin"/><text x="416" y="260" class="pinlabel">32</text><circle cx="404" cy="280" r="4" class="pin"/><text x="416" y="284" class="pinlabel">33</text><circle cx="404" cy="304" r="5.5" class="pin-used"/><text x="416" y="308" class="pinlabel-used">25</text><circle cx="404" cy="328" r="4" class="pin"/><text x="416" y="332" class="pinlabel">26</text><circle cx="404" cy="352" r="4" class="pin"/><text x="416" y="356" class="pinlabel">27</text><circle cx="404" cy="376" r="4" class="pin"/><text x="416" y="380" class="pinlabel">14</text><circle cx="404" cy="400" r="4" class="pin"/><text x="416" y="404" class="pinlabel">12</text><circle cx="404" cy="424" r="5.5" class="pin-used"/><text x="416" y="428" class="pinlabel-used">GND</text><circle cx="404" cy="448" r="4" class="pin"/><text x="416" y="452" class="pinlabel">13</text><circle cx="404" cy="472" r="4" class="pin"/><text x="416" y="476" class="pinlabel">D2</text><circle cx="404" cy="496" r="4" class="pin"/><text x="416" y="500" class="pinlabel">D3</text><circle cx="404" cy="520" r="4" class="pin"/><text x="416" y="524" class="pinlabel">CMD</text><circle cx="404" cy="544" r="5.5" class="pin-used"/><text x="416" y="548" class="pinlabel-used">5V</text><circle cx="556" cy="112" r="5.5" class="pin-used"/><text x="544" y="116" class="pinlabel-used" text-anchor="end">GND</text><circle cx="556" cy="136" r="4" class="pin"/><text x="544" y="140" class="pinlabel" text-anchor="end">23</text><circle cx="556" cy="160" r="4" class="pin"/><text x="544" y="164" class="pinlabel" text-anchor="end">22</text><circle cx="556" cy="184" r="4" class="pin"/><text x="544" y="188" class="pinlabel" text-anchor="end">TX</text><circle cx="556" cy="208" r="4" class="pin"/><text x="544" y="212" class="pinlabel" text-anchor="end">RX</text><circle cx="556" cy="232" r="4" class="pin"/><text x="544" y="236" class="pinlabel" text-anchor="end">21</text><circle cx="556" cy="256" r="4" class="pin"/><text x="544" y="260" class="pinlabel" text-anchor="end">GND</text><circle cx="556" cy="280" r="4" class="pin"/><text x="544" y="284" class="pinlabel" text-anchor="end">19</text><circle cx="556" cy="304" r="4" class="pin"/><text x="544" y="308" class="pinlabel" text-anchor="end">18</text><circle cx="556" cy="328" r="4" class="pin"/><text x="544" y="332" class="pinlabel" text-anchor="end">5</text><circle cx="556" cy="352" r="5.5" class="pin-used"/><text x="544" y="356" class="pinlabel-used" text-anchor="end">17</text><circle cx="556" cy="376" r="5.5" class="pin-used"/><text x="544" y="380" class="pinlabel-used" text-anchor="end">16</text><circle cx="556" cy="400" r="4" class="pin"/><text x="544" y="404" class="pinlabel" text-anchor="end">4</text><circle cx="556" cy="424" r="4" class="pin"/><text x="544" y="428" class="pinlabel" text-anchor="end">0</text><circle cx="556" cy="448" r="4" class="pin"/><text x="544" y="452" class="pinlabel" text-anchor="end">2</text><circle cx="556" cy="472" r="4" class="pin"/><text x="544" y="476" class="pinlabel" text-anchor="end">15</text><circle cx="556" cy="496" r="4" class="pin"/><text x="544" y="500" class="pinlabel" text-anchor="end">D1</text><circle cx="556" cy="520" r="4" class="pin"/><text x="544" y="524" class="pinlabel" text-anchor="end">D0</text><circle cx="556" cy="544" r="4" class="pin"/><text x="544" y="548" class="pinlabel" text-anchor="end">CLK</text><rect x="40" y="330" width="170" height="232" rx="10" class="part-box"/><text x="56" y="356" class="part-title">TF-Luna LiDAR</text><text x="56" y="374" class="part-sub">connector pins</text><circle cx="66" cy="396" r="10" class="lens-ring"/><circle cx="66" cy="396" r="6" class="lens"/><circle cx="96" cy="396" r="10" class="lens-ring"/><circle cx="96" cy="396" r="6" class="lens"/><circle cx="210" cy="420" r="5.5" class="pin-used"/><text x="196" y="424" class="slabel" text-anchor="end">1  +5V</text><circle cx="210" cy="444" r="5.5" class="pin-used"/><text x="196" y="448" class="slabel" text-anchor="end">2  RXD</text><circle cx="210" cy="468" r="5.5" class="pin-used"/><text x="196" y="472" class="slabel" text-anchor="end">3  TXD</text><circle cx="210" cy="492" r="5.5" class="pin-used"/><text x="196" y="496" class="slabel" text-anchor="end">4  GND</text><circle cx="210" cy="516" r="4" class="pin"/><text x="196" y="520" class="slabel-dim" text-anchor="end">5  CFG</text><circle cx="210" cy="540" r="4" class="pin"/><text x="196" y="544" class="slabel-dim" text-anchor="end">6  MUX</text><path d="M210 516 h18 M210 540 h18" class="nc"/><text x="234" y="520" class="note">leave</text><text x="234" y="544" class="note">free</text><rect x="740" y="82" width="180" height="104" rx="10" class="buzz-pcb"/><circle cx="860" cy="134" r="30" class="buzzer"/><circle cx="860" cy="134" r="5" class="buzzer-hole"/><text x="752" y="76" class="part-title">Passive buzzer</text><circle cx="740" cy="112" r="5.5" class="pin-used"/><text x="756" y="116" class="buzz-label">−</text><circle cx="740" cy="136" r="5.5" class="pin-used"/><text x="756" y="140" class="buzz-label">+</text><circle cx="740" cy="160" r="5.5" class="pin-used"/><text x="756" y="164" class="buzz-label">S</text><rect x="690" y="626" width="230" height="60" rx="12" class="bank"/><text x="805" y="652" class="bank-title" text-anchor="middle">USB power bank</text><text x="805" y="670" class="bank-sub" text-anchor="middle">powers everything</text><g class="tag t-pwr"><rect x="286.4" y="470" width="27.2" height="20" rx="10"/><text x="300" y="484" text-anchor="middle">5V</text></g><g class="tag t-gnd"><rect x="313.1" y="448" width="33.8" height="20" rx="10"/><text x="330" y="462" text-anchor="middle">GND</text></g><g class="tag t-tx"><rect x="326.6" y="600" width="66.8" height="20" rx="10"/><text x="360" y="614" text-anchor="middle">TXD → 16</text></g><g class="tag t-rx"><rect x="514.6" y="616" width="66.8" height="20" rx="10"/><text x="548" y="630" text-anchor="middle">RXD ← 17</text></g><g class="tag t-gnd"><rect x="633.1" y="102" width="33.8" height="20" rx="10"/><text x="650" y="116" text-anchor="middle">GND</text></g><g class="tag t-pwr"><rect x="579.9" y="30" width="60.2" height="20" rx="10"/><text x="610" y="44" text-anchor="middle">+ → 3V3</text></g><g class="tag t-sig"><rect x="393.2" y="14" width="53.6" height="20" rx="10"/><text x="420" y="28" text-anchor="middle">S → 25</text></g><g class="tag t-usb"><rect x="553.3" y="646" width="73.4" height="20" rx="10"/><text x="590" y="660" text-anchor="middle">USB cable</text></g></svg></div>
+    <ul class="legend" aria-label="Wire colors">
+      <li><i style="background: var(--wire-pwr)"></i>Power</li>
+      <li><i style="background: var(--wire-gnd)"></i>Ground</li>
+      <li><i style="background: var(--wire-tx)"></i>Sensor → board</li>
+      <li><i style="background: var(--wire-rx)"></i>Board → sensor</li>
+      <li><i style="background: var(--wire-sig)"></i>Buzzer signal</li>
+    </ul>
+    <p>The colors are only for this diagram. Use whatever jumper colors you have, but it helps to keep red for power and black for ground.</p>
+    <div class="pins-scroll">
+      <table>
+        <thead><tr><th>From</th><th>To ESP32 pin</th><th>What it carries</th></tr></thead>
+        <tbody>
+          <tr><td>Sensor pin 1 · +5V</td><td class="mono">5V</td><td>Power for the sensor</td></tr>
+          <tr><td>Sensor pin 4 · GND</td><td class="mono">GND</td><td>Ground</td></tr>
+          <tr><td>Sensor pin 3 · TXD</td><td class="mono">GPIO 16</td><td>Distance readings</td></tr>
+          <tr><td>Sensor pin 2 · RXD</td><td class="mono">GPIO 17</td><td>Settings (unused for now)</td></tr>
+          <tr><td>Sensor pins 5 and 6</td><td class="mono">nothing</td><td>Leaving pin 5 free keeps the sensor in the right mode</td></tr>
+          <tr><td>Buzzer S</td><td class="mono">GPIO 25</td><td>The tone</td></tr>
+          <tr><td>Buzzer +</td><td class="mono">3V3</td><td>Power for the buzzer</td></tr>
+          <tr><td>Buzzer −</td><td class="mono">GND</td><td>Ground (any GND pin works)</td></tr>
+          <tr><td>Power bank</td><td class="mono">USB socket</td><td>Power for everything</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout" role="note">
+      <h3>Before plugging in power</h3>
+      <p>Check which wire is which on the sensor's cable, using the labels on the sensor or the seller's diagram. Don't rely on wire colors. Power on the wrong pin can damage the sensor. The pin numbers above come from a vendor's notes, not Benewake's official datasheet. Also check that the buzzer module is passive and marked S, + and −. Some are labelled I/O, VCC and GND instead.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="arrive">
+    <h2 id="arrive">When the parts arrive</h2>
+    <ol class="steps">
+      <li>Install the free Arduino IDE on the Mac, then add ESP32 support: Boards Manager → <strong>esp32 by Espressif</strong>.</li>
+      <li>Open <code class="term">firmware/lidar-ble/lidar-ble.ino</code> from the FlyingBlind repo, plug in the board, pick it under Tools → Board, and click Upload.</li>
+      <li>If the Mac doesn't see the board, it may need a USB driver named on the small chip near the USB socket (usually CH340 or CP2102).</li>
+      <li>Wire the sensor as above, power it up, then open the app on the Pixel and choose <strong>ESP32 LiDAR</strong> as the source, with Feedback set to <strong>Tone</strong>.</li>
+    </ol>
+  </section>
+
+  <footer>
+    Prices are rough and vary by seller. This build is designed and written but not yet tested on real hardware, so expect some debugging the first time. App: <a href="https://egilchri.github.io/FlyingBlind/">egilchri.github.io/FlyingBlind</a> · <a href="pocket-scanner.html">3D picture of the scanner</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const KEY = 'lidar-parts-ticked';
+  let ticked = {};
+  try { ticked = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { ticked = {}; }
+
+  const parts = Array.from(document.querySelectorAll('.part'));
+  const required = parts.filter((p) => !['adapter', 'buzzer'].includes(p.dataset.id));
+  const progress = document.getElementById('progress');
+
+  function render() {
+    for (const p of parts) {
+      const box = p.querySelector('input[type="checkbox"]');
+      box.checked = !!ticked[p.dataset.id];
+      p.classList.toggle('done', box.checked);
+    }
+    const n = required.filter((p) => ticked[p.dataset.id]).length;
+    progress.textContent = `${n} of ${required.length} essentials ordered`;
+  }
+
+  for (const p of parts) {
+    p.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+      ticked[p.dataset.id] = e.target.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(ticked)); } catch (err) { /* not saved; fine */ }
+      render();
+    });
+  }
+
+  for (const btn of document.querySelectorAll('.copy')) {
+    btn.addEventListener('click', () => {
+      const term = btn.parentElement.querySelector('.term');
+      const done = () => { btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500); };
+      const fallback = () => {
+        const r = document.createRange();
+        r.selectNodeContents(term);
+        const s = getSelection();
+        s.removeAllRanges();
+        s.addRange(r);
+        btn.textContent = 'Selected';
+        setTimeout(() => (btn.textContent = 'Copy'), 1500);
+      };
+      try {
+        navigator.clipboard.writeText(term.textContent).then(done, fallback);
+      } catch (e) { fallback(); }
+    });
+  }
+
+  render();
+})();
+</script>
+
+</body>
+</html>
