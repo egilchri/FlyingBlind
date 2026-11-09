@@ -424,7 +424,7 @@ p { margin: 0; max-width: 65ch; }
   const hand = new THREE.Group();
   device.add(hand);
   const SKIN = new THREE.Color(0x9b5f42);
-  const skin = mat({ color: SKIN, roughness: 0.55, sheen: 0.25, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffc4a6), clearcoat: 0.06, clearcoatRoughness: 0.6 });
+  const skin = mat({ color: 0xb87652, roughness: 0.55, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffc9b0), clearcoat: 0.08 });
   const skinVC = skin.clone();
   skinVC.color = new THREE.Color(0xffffff);
   skinVC.vertexColors = true;
@@ -432,12 +432,57 @@ p { margin: 0; max-width: 65ch; }
   const sleeveMat = mat({ color: 0x2c3a55, roughness: 0.9, sheen: 0.6, sheenColor: new THREE.Color(0x6d7ea3) });
   const C = (hex) => new THREE.Color(hex);
   const TIP_RED = C(0xa8513d), PALM_LIGHT = C(0xb67c5d), CREASE = C(0x7a4631);
-  const NAIL = C(0xbf8274), LUNULA = C(0xd3a698), FREE_EDGE = C(0xd2b3a6);
+  const NAIL = C(0xc98a7a), LUNULA = C(0xdcb0a2), FREE_EDGE = C(0xe2c8bc), SKINC = C(0xb87652);
+  const sm = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
   const V3 = (a) => new THREE.Vector3(...a);
   const UP = new THREE.Vector3(0, 1, 0);
   const smooth01 = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
   const putH = (m) => { m.castShadow = true; m.receiveShadow = true; hand.add(m); return m; };
 
+  function capsuleH(A, B, r) {
+    const m = putH(new THREE.Mesh(new THREE.CapsuleGeometry(r, A.distanceTo(B), 10, 24), skin));
+    m.position.copy(A).add(B).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(UP, B.clone().sub(A).normalize());
+  }
+  function nail(a, b, r, out) {
+    const A = V3(a), B = V3(b), len = A.distanceTo(B);
+    const t = B.clone().sub(A).normalize();
+    const back = V3(out); back.addScaledVector(t, -back.dot(t)).normalize();   // back of the finger
+    const side = t.clone().cross(back);
+    const s0 = len - Math.min(len * 0.62, r * 1.45), s1 = len + r * 0.72; // past B the capsule's dome
+    const NU = 24, NV = 16, pos = [], col = [], idx = [];
+    for (let iu = 0; iu <= NU; iu++) {
+      const u = iu / NU, s = s0 + (s1 - s0) * u;
+      // over the dome, the flesh drops away; the nail keeps going a little flatter
+      const over = Math.max(0, s - len), drop = r - Math.sqrt(Math.max(0, r * r - over * over));
+      let hw = 0.68;                                   // half-width, radians around the finger
+      if (u < 0.15) hw *= 0.7 + 0.3 * Math.sqrt(1 - ((0.15 - u) / 0.15) ** 2);   // rounded base
+      for (let iv = 0; iv <= NV; iv++) {
+        const v = (iv / NV) * 2 - 1, ang = v * hw;
+        const lift = 0.18 + 0.28 * (1 - v * v) * sm(u / 0.3);   // edges tuck into the skin
+        const rr = r + lift;
+        const q = A.clone().addScaledVector(t, Math.min(s, len) + over * 0.9)
+          .addScaledVector(back, Math.cos(ang) * rr - drop * 0.6)
+          .addScaledVector(side, Math.sin(ang) * rr * 0.98);
+        pos.push(q.x, q.y, q.z);
+        const k = NAIL.clone();
+        k.lerp(LUNULA, 0.8 * sm((0.2 - u) / 0.12) * (1 - Math.abs(v) ** 3));
+        k.lerp(FREE_EDGE, sm((u - 0.86) / 0.1));
+        k.lerp(SKINC, 0.3 * Math.abs(v) ** 6);
+        col.push(k.r, k.g, k.b);
+      }
+    }
+    for (let iu = 0; iu < NU; iu++) for (let iv = 0; iv < NV; iv++) {
+      const p0 = iu * (NV + 1) + iv, p1 = p0 + 1, p2 = p0 + NV + 1, p3 = p2 + 1;
+      idx.push(p0, p2, p1, p1, p2, p3);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    putH(new THREE.Mesh(g, nailMat));
+  }
   // spec: base (knuckle), dir (pointing when straight), palmar (which way the pad faces),
   // lengths of the 3 bones, bend at each joint (radians), base and tip radius.
   function digit({ base, dir, palmar, lengths, bends, r0, rTip, knuckleW = 6 }) {
@@ -484,63 +529,12 @@ p { margin: 0; max-width: 65ch; }
       return F.p.clone().addScaledVector(F.back, c * ry).addScaledVector(F.side, sn * rx);
     };
 
-    // skin
-    const M = 32, pos = [], col = [], idx = [];
-    frames.forEach((F, i) => {
-      for (let j = 0; j < M; j++) {
-        const phi = (j / M) * Math.PI * 2, c = Math.cos(phi);
-        const q = surf(F, phi, F.s);
-        pos.push(q.x, q.y, q.z);
-        const k = SKIN.clone();
-        if (c < 0) k.lerp(PALM_LIGHT, 0.35 * -c);
-        k.lerp(TIP_RED, 0.4 * smooth01((F.s - (L - lengths[2] * 1.1)) / (lengths[2] * 1.1)));
-        const crease = Math.max(...[1, 2].map((n) => Math.exp(-(((F.s - jc[n]) / 2.5) ** 2))));
-        if (c > 0.3) k.lerp(CREASE, 0.28 * crease * c);
-        col.push(k.r, k.g, k.b);
-      }
-    });
-    for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) {
-      const a = i * M + j, b = i * M + ((j + 1) % M), c2 = a + M, d = b + M;
-      idx.push(a, b, c2, b, d, c2);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-    g.setIndex(idx);
-    g.computeVertexNormals();
-    putH(new THREE.Mesh(g, skinVC));
-
-    // nail: a thin shell on the back of the last bone
-    const sA = L - lengths[2] * 0.52, sB = L - cap * 0.38;
-    const NU = 28, NV = 18, maxHW = 0.72, npos = [], ncol = [], nidx = [];
-    for (let iu = 0; iu <= NU; iu++) {
-      const u = iu / NU, s = sA + (sB - sA) * u;
-      const F = frameAt(s);
-      F.r = Math.max(F.r, rTip * 0.8);   // the free edge carries on past the flesh
-      let hw = maxHW;
-      if (u < 0.14) hw *= 0.72 + 0.28 * Math.sqrt(1 - ((0.14 - u) / 0.14) ** 2);
-      if (u > 0.82) hw *= 0.86 + 0.14 * Math.sqrt(Math.max(0, 1 - ((u - 0.82) / 0.18) ** 2));
-      for (let iv = 0; iv <= NV; iv++) {
-        const v = (iv / NV) * 2 - 1;
-        const q = surf(F, v * hw, s, 0.22 + 0.2 * (1 - v * v));
-        npos.push(q.x, q.y, q.z);
-        const k = NAIL.clone();
-        k.lerp(LUNULA, 0.85 * smooth01((0.2 - u) / 0.12) * (1 - Math.abs(v) ** 3));
-        k.lerp(FREE_EDGE, smooth01((u - 0.9) / 0.08));
-        k.lerp(SKIN, 0.25 * Math.abs(v) ** 6);
-        ncol.push(k.r, k.g, k.b);
-      }
-    }
-    for (let iu = 0; iu < NU; iu++) for (let iv = 0; iv < NV; iv++) {
-      const a = iu * (NV + 1) + iv, b = a + 1, c2 = a + NV + 1, d = c2 + 1;
-      nidx.push(a, c2, b, b, c2, d);
-    }
-    const ng = new THREE.BufferGeometry();
-    ng.setAttribute('position', new THREE.Float32BufferAttribute(npos, 3));
-    ng.setAttribute('color', new THREE.Float32BufferAttribute(ncol, 3));
-    ng.setIndex(nidx);
-    ng.computeVertexNormals();
-    putH(new THREE.Mesh(ng, nailMat));
+    // joints along the centre line, drawn as rounded segments like a real
+    // finger's bones, with a nail on the back of the last one
+    const pts = [0, lengths[0], lengths[0] + lengths[1], L - cap].map((s) => frameAt(s));
+    const radii = [r0, r0 - (r0 - rTip) * 0.4, rTip];
+    for (let k = 0; k < 3; k++) capsuleH(pts[k].p, pts[k + 1].p, radii[k]);
+    nail(pts[2].p.toArray(), pts[3].p.toArray(), rTip, pts[3].back.toArray());
     return frames;
   }
 
