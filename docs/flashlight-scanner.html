@@ -129,6 +129,7 @@ p { margin: 0; max-width: 65ch; }
 .vs dt { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .vs dd { margin: 0; font: 700 1.15rem var(--font-display); font-variant-numeric: tabular-nums; }
 .size { font: 500 0.9rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.notes a { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -153,7 +154,7 @@ p { margin: 0; max-width: 65ch; }
   </div>
 
   <div class="toolbar" role="toolbar" aria-label="View controls">
-    <button type="button" id="btn-hand" aria-pressed="true">Hand</button>
+    <button type="button" id="btn-hand" aria-pressed="false">Hand</button>
     <button type="button" id="btn-xray" aria-pressed="false">See inside</button>
     <button type="button" id="btn-compare" aria-pressed="false">Compare with the others</button>
     <button type="button" id="btn-labels" aria-pressed="true">Labels</button>
@@ -180,6 +181,7 @@ p { margin: 0; max-width: 65ch; }
         <li><strong>A short USB cable with an inline on/off switch</strong> joins the power bank to the board. Its button pokes through the case under the thumb.</li>
         <li><strong>A 3D-printed case</strong> (a library makerspace or an online print service). The tail cap comes off to slide the power bank out for charging.</li>
         <li>This is a 3D model at true size, not a photo or a finished design. Weight and battery life are estimates.</li>
+        <li><a href="flashlight-parts.html">Parts list and wiring</a> · <a href="software-design.html">How the software works</a></li>
       </ul>
   </div>
 </div>
@@ -613,7 +615,7 @@ p { margin: 0; max-width: 65ch; }
     return { ...t, el, v: new THREE.Vector3(...t.at) };
   });
 
-  let showLabels = true, handOn = true, compare = false;
+  let showLabels = true, handOn = false, compare = false;
   function placeTags(w, h) {
     const mode = compare ? 'compare' : xray ? 'inside' : 'main';
     for (const t of TAGS) {

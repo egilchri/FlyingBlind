@@ -106,6 +106,9 @@ Two alternative designs, also as 3D pictures:
   thumb, and the buzzer grille facing up. Needs a small firmware change for the XIAO's pins.
   Its parts list, wiring and assembly steps are in `docs/flashlight-parts.html`.
 
+How the firmware and the app fit together, and what each sound means, is in
+`docs/software-design.html`.
+
 Note: the sensor's beam is infrared and invisible, and it is wider than a laser meter's dot (about
 2° for the TF-Luna), so it reads the nearest large surface rather than a pinpoint.
 

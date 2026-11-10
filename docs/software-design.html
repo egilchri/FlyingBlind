@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FlyingBlind Software Design</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single-column design note, like the inside cover of a kit manual: a signal-flow diagram first, then one section per program, then the rules both follow. */
+:root {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --ink: #15201b;
+  --muted: #56645d;
+  --line: #d3dcd7;
+  --accent: #0d7246;
+  --accent-soft: #e1efe7;
+  --copper: #9a5420;
+  --copper-soft: #f7ebe0;
+  --sig: #e08a0b;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1513; --surface: #17201c; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832;
+    --accent: #52c58f; --accent-soft: #1b3027; --copper: #e3a06a; --copper-soft: #33251a; --sig: #f0a53a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1513; --surface: #17201c; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832;
+  --accent: #52c58f; --accent-soft: #1b3027; --copper: #e3a06a; --copper-soft: #33251a; --sig: #f0a53a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-body); }
+.wrap {
+  max-width: 780px; margin: 0 auto;
+  padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 40px;
+}
+header { display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font: 500 0.78rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(2rem, 6vw, 2.9rem)/1.05 var(--font-display); font-stretch: 85%; margin: 0; text-wrap: balance; }
+h2 { font: 700 1.35rem/1.2 var(--font-display); font-stretch: 90%; margin: 0; text-wrap: balance; }
+h3 { font: 700 1.02rem/1.3 var(--font-display); margin: 0; }
+p { margin: 0; max-width: 65ch; }
+.lede { font-size: 1.08rem; color: var(--muted); }
+section { display: flex; flex-direction: column; gap: 14px; }
+ul.plain { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; }
+ul.plain li { max-width: 64ch; }
+code { font: 500 0.88em var(--font-mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+.flow-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.flow { display: block; width: 100%; min-width: 640px; height: auto; font-family: var(--font-body); }
+.flow .box { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.flow .box-main { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.flow .t { fill: var(--ink); font-size: 14px; font-weight: 600; }
+.flow .s { fill: var(--muted); font-size: 11.5px; }
+.flow .m { fill: var(--muted); font-size: 11px; font-family: var(--font-mono); }
+.flow .arrow { stroke: var(--ink); stroke-width: 1.6; fill: none; }
+.flow .arrow-opt { stroke: var(--muted); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+.flow .head { fill: var(--ink); }
+.flow .head-opt { fill: var(--muted); }
+.flow .lbl { fill: var(--ink); font-size: 11px; font-family: var(--font-mono); }
+.flow .lbl-opt { fill: var(--muted); font-size: 11px; font-family: var(--font-mono); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card p { font-size: 0.95rem; }
+
+.table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 520px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.mono { font-family: var(--font-mono); font-size: 0.88rem; white-space: nowrap; }
+
+.rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.rules li { display: grid; grid-template-columns: minmax(150px, 0.8fr) 2fr; gap: 4px 18px; padding: 14px 16px; }
+.rules li + li { border-top: 1px solid var(--line); }
+.rules strong { font-weight: 600; }
+.rules span { color: var(--ink); }
+@media (max-width: 560px) { .rules li { grid-template-columns: 1fr; } }
+
+.callout { background: var(--copper-soft); border: 1px solid color-mix(in srgb, var(--copper) 35%, transparent); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.callout h3 { color: var(--copper); }
+footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+footer a, a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">FlyingBlind · how the software works</span>
+    <h1>Software design overview</h1>
+    <p class="lede">Two programs work together. The firmware runs on the scanner itself and turns distance into a tone on its own buzzer, so no phone is needed. The phone app is optional: it can speak distances, play the tone through the phone, and work with other laser meters.</p>
+  </header>
+
+  <section aria-labelledby="flow">
+    <h2 id="flow">Where a reading goes</h2>
+    <div class="flow-scroll">
+      <svg class="flow" viewBox="0 0 760 330" role="img" aria-labelledby="flow-title flow-desc">
+        <title id="flow-title">Signal flow</title>
+        <desc id="flow-desc">The LiDAR sensor sends 100 frames a second over a serial wire to the firmware on the ESP32. The firmware drives the buzzer directly, and optionally sends 50 readings a second over Bluetooth to the phone app, which can speak or play a tone.</desc>
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="head-opt" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+        <!-- sensor -->
+        <rect class="box" x="16" y="40" width="160" height="92" rx="10"/>
+        <text class="t" x="32" y="68">LiDAR sensor</text>
+        <text class="s" x="32" y="88">TF-Luna or TFmini-S</text>
+        <text class="m" x="32" y="112">0.2–8 m, 100×/s</text>
+        <!-- firmware -->
+        <rect class="box-main" x="262" y="24" width="236" height="124" rx="10"/>
+        <text class="t" x="278" y="52">Firmware on the ESP32</text>
+        <text class="s" x="278" y="74">checks each frame, drops weak ones</text>
+        <text class="s" x="278" y="92">turns distance into a pitch</text>
+        <text class="s" x="278" y="110">glides between readings</text>
+        <text class="m" x="278" y="132">lidar-ble.ino · tone_logic.h</text>
+        <!-- buzzer -->
+        <rect class="box" x="584" y="40" width="160" height="92" rx="10"/>
+        <text class="t" x="600" y="68">Buzzer</text>
+        <text class="s" x="600" y="88">the tone you hear</text>
+        <text class="m" x="600" y="112">400–3000 Hz</text>
+        <!-- phone -->
+        <rect class="box" x="262" y="214" width="236" height="96" rx="10" stroke-dasharray="6 4"/>
+        <text class="t" x="278" y="242">Phone app (optional)</text>
+        <text class="s" x="278" y="262">speaks distances, or plays the tone</text>
+        <text class="s" x="278" y="280">Chrome on Android</text>
+        <text class="m" x="278" y="298">app.js · devices/ · tone.js</text>
+        <!-- other meters -->
+        <rect class="box" x="584" y="214" width="160" height="96" rx="10" stroke-dasharray="6 4"/>
+        <text class="t" x="600" y="242">Other sources</text>
+        <text class="s" x="600" y="262">Leica, Bosch meters</text>
+        <text class="s" x="600" y="280">or the simulator</text>
+        <!-- arrows -->
+        <path class="arrow" d="M176 86 H258" marker-end="url(#ah)"/>
+        <text class="lbl" x="184" y="78">serial</text>
+        <text class="lbl" x="184" y="104">9 bytes</text>
+        <path class="arrow" d="M498 86 H580" marker-end="url(#ah)"/>
+        <text class="lbl" x="506" y="78">PWM</text>
+        <path class="arrow-opt" d="M380 148 V210" marker-end="url(#ah2)"/>
+        <text class="lbl-opt" x="390" y="176">Bluetooth LE</text>
+        <text class="lbl-opt" x="390" y="192">4 bytes, 50×/s</text>
+        <path class="arrow-opt" d="M584 262 H502" marker-end="url(#ah2)"/>
+      </svg>
+    </div>
+    <p>The buzzer path works on its own, which is why the scanner also works for iPhone users: Safari can't talk to Bluetooth devices from a web page, but the scanner doesn't need it to.</p>
+  </section>
+
+  <section aria-labelledby="fw">
+    <h2 id="fw">The firmware, on the scanner</h2>
+    <p>A small Arduino program for the ESP32. It has no settings screen: the behaviour is fixed in the code, with a few values near the top to change by hand.</p>
+    <div class="cards">
+      <div class="card">
+        <h3>Reading the sensor</h3>
+        <p>The sensor sends a 9-byte frame 100 times a second. The firmware checks the header and checksum, and treats a weak return (signal strength under 100) as "no target" rather than trusting the distance.</p>
+      </div>
+      <div class="card">
+        <h3>Distance to pitch</h3>
+        <p>Closer is higher, like a parking sensor. The scale is logarithmic: each doubling of distance moves the pitch by the same musical step, so there's fine detail up close. 0.2 m plays 3000 Hz and 5 m or more plays 400 Hz.</p>
+      </div>
+      <div class="card">
+        <h3>Smooth, but honest</h3>
+        <p>Each reading closes half the gap to the new pitch, so waving gives a smooth sweep, yet a jump from a near object to a far wall is still a clear step. It settles in about 30 ms.</p>
+      </div>
+      <div class="card">
+        <h3>Bluetooth</h3>
+        <p>Advertises as <code>FBLidar</code> and sends a 4-byte reading 50 times a second: distance in millimetres (0 = no target) and signal strength.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="sounds">
+    <h2 id="sounds">What each sound means</h2>
+    <p>The sounds are designed so the user never has to guess whether silence means "nothing there" or "something's broken".</p>
+    <ul class="rules">
+      <li><strong>Three rising beeps</strong><span>Switched on and running.</span></li>
+      <li><strong>A steady tone</strong><span>Something is in front. Higher means closer.</span></li>
+      <li><strong>Silence</strong><span>Nothing in range, or a surface the sensor can't see well (glass, a black surface far away). A single dropped reading doesn't cut the tone; silence needs 60 ms of "no target".</span></li>
+      <li><strong>A low tick every 3 seconds</strong><span>The sensor has stopped sending. Check its wires. This starts 2 seconds after the last reading, so a fault is never mistaken for an empty room.</span></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="app">
+    <h2 id="app">The phone app</h2>
+    <p>A web app that installs to the home screen and works offline. It runs in Chrome on Android, which can talk to Bluetooth devices from a web page.</p>
+    <div class="cards">
+      <div class="card">
+        <h3>Sources</h3>
+        <p>Every source (the ESP32 scanner, a Leica DISTO, a Bosch GLM, a simulator, a Bluetooth explorer) is a small driver that reports readings the same way, so the rest of the app doesn't care where a reading came from.</p>
+      </div>
+      <div class="card">
+        <h3>Speech mode</h3>
+        <p>Speaks each measurement in metres, feet and inches, or inches. A fast stream from the scanner isn't spoken, since it would talk over itself; press Measure to hear the latest distance.</p>
+      </div>
+      <div class="card">
+        <h3>Tone mode</h3>
+        <p>Plays the tone through the phone, with the same closer-is-higher rule. It fades out if readings stop for 1.5 seconds, so silence never hides a stale distance.</p>
+      </div>
+      <div class="card">
+        <h3>Built for a screen reader</h3>
+        <p>The reading's label doesn't change many times a second in tone mode, so TalkBack isn't flooded. The screen stays awake while scanning.</p>
+      </div>
+    </div>
+    <p>The simulator lets the app be tried without hardware: it pretends to be in a room, and on a phone, turning the phone left and right aims the pretend sensor.</p>
+  </section>
+
+  <section aria-labelledby="files">
+    <h2 id="files">Where it lives in the repo</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>File</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">firmware/lidar-ble/lidar-ble.ino</td><td>The scanner's program: sensor, buzzer and Bluetooth.</td></tr>
+          <tr><td class="mono">firmware/lidar-ble/tone_logic.h</td><td>Distance to pitch, glide, silence and the fault tick. Plain C++ so it's tested on a computer.</td></tr>
+          <tr><td class="mono">firmware/test/tone_logic_test.cpp</td><td>17 tests of the tone rules, run on the Mac.</td></tr>
+          <tr><td class="mono">app.js</td><td>The app's screen, settings, and what to do with each reading.</td></tr>
+          <tr><td class="mono">devices/*.js</td><td>One driver per source, plus the shared Bluetooth connect-and-reconnect code.</td></tr>
+          <tr><td class="mono">tone.js · pitch.js</td><td>The phone's tone and its distance-to-pitch rule.</td></tr>
+          <tr><td class="mono">speech.js · format.js</td><td>Speaking, and turning metres into words in each unit.</td></tr>
+          <tr><td class="mono">sw.js · version.js</td><td>Offline support and the version number shown in the app.</td></tr>
+          <tr><td class="mono">test/*.mjs</td><td>Tests for the spoken formats and the pitch rule.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="callout" role="note">
+    <h3>Not yet tried on real hardware</h3>
+    <p>The firmware and the scanner's Bluetooth driver were written from the sensor's datasheet and haven't run on a real board yet, so expect some debugging the first time. The flashlight version also needs its pin numbers set for the XIAO board. The Leica and Bosch drivers follow community notes and haven't been checked against real meters.</p>
+  </div>
+
+  <footer>
+    App: <a href="https://egilchri.github.io/FlyingBlind/">egilchri.github.io/FlyingBlind</a> · Source: <a href="https://github.com/egilchri/FlyingBlind">github.com/egilchri/FlyingBlind</a>
+  </footer>
+</div>
+
+</body>
+</html>
