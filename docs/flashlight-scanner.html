@@ -148,8 +148,8 @@ p { margin: 0; max-width: 65ch; }
   </header>
 
   <dl class="vs">
-    <div><dt>Size</dt><dd>17 × 5 × 5 cm</dd></div>
-    <div><dt>Weight</dt><dd>about 135 g</dd></div>
+    <div><dt>Size</dt><dd>19 × 5 × 5 cm</dd></div>
+    <div><dt>Weight</dt><dd>about 140 g</dd></div>
     <div><dt>Soldering</dt><dd>None</dd></div>
     <div><dt>Battery</dt><dd>about 8 h (estimate)</dd></div>
   </dl>
@@ -175,7 +175,7 @@ p { margin: 0; max-width: 65ch; }
       <ul>
         <li><strong>Direction comes from the grip.</strong> The beam leaves the front along the line of the handle, so it points where the arm points, like a flashlight.</li>
         <li><strong>Front and back feel different.</strong> A wide round head at the front, a narrow handle behind it, and a lanyard loop at the tail.</li>
-        <li><strong>A click button under the thumb</strong> switches it on and off. A short chirp at switch-on confirms it's working.</li>
+        <li><strong>A click button under the thumb,</strong> on top of the head with a raised rim around it, switches it on and off. A short chirp at switch-on confirms it's working.</li>
         <li><strong>The buzzer grille faces up</strong> on top of the head, in front of the hand, so the hand doesn't muffle the tone.</li>
         <li><strong>No loose wires</strong> outside the case, so nothing snags. If the sensor stops working, the firmware plays a low tick every few seconds, so a fault isn't mistaken for "nothing there".</li>
       </ul>
@@ -186,7 +186,7 @@ p { margin: 0; max-width: 65ch; }
         <li><strong>Same as the wand:</strong> TF-Luna sensor, buzzer module, jumper wires and a lipstick power bank.</li>
         <li><strong>XIAO ESP32-S3 with its pins already soldered on,</strong> in place of the larger ESP32 board, so the head stays small. The same firmware runs on it; it picks the XIAO's pins by itself.</li>
         <li><strong>A short USB cable with an inline on/off switch</strong> joins the power bank to the board. Its button pokes through the case under the thumb.</li>
-        <li><strong>A 3D-printed case</strong> (a library makerspace or an online print service). The tail cap comes off to slide the power bank out for charging.</li>
+        <li><strong>A 3D-printed case</strong> in three parts: body, front bezel and tail cap, with no supports needed. The tail cap comes off to slide the power bank out for charging. <a href="https://github.com/egilchri/FlyingBlind/tree/main/hardware/flashlight-case">Print files</a>.</li>
         <li>This is a 3D model at true size, not a photo or a finished design. Weight and battery life are estimates.</li>
         <li><a href="flashlight-parts.html">Parts list and wiring</a> · <a href="software-design.html">How the software works</a></li>
       </ul>
@@ -309,7 +309,7 @@ p { margin: 0; max-width: 65ch; }
   const HC = 24;            // height of the centre line when lying on the mat
   const RY = HC + 11, TOP = RY + 1.5;   // reference heights the hand pose uses
   const RH = 15, RHEAD = 24;
-  const X_TAIL = -126, X_NECK = -8, X_HEAD = 6, X_FRONT = 42;
+  const X_TAIL = -144, X_NECK = -34, X_HEAD = -20, X_FRONT = 42;   // matches hardware/flashlight-case
   const shell = [];
   const along = (geo) => { geo.rotateZ(-Math.PI / 2); return geo; };   // cylinders lie along x
   function tube(r0, r1, x0, x1, material = M.caseOrange) {
@@ -336,15 +336,15 @@ p { margin: 0; max-width: 65ch; }
     lens.scale.set(1, 0.35, 1);
   }
   // buzzer grille on top of the head
-  const GX = 18;
+  const GX = 20;
   [[0, 0], [3.2, 0], [-3.2, 0], [1.6, 2.8], [-1.6, 2.8], [1.6, -2.8], [-1.6, -2.8], [4.8, 2.8], [-4.8, 2.8], [4.8, -2.8], [-4.8, -2.8]].forEach(([dz, dx]) => {
     const h = add(device, new THREE.CylinderGeometry(0.9, 0.9, 0.4, 16), M.black, GX + dx, HC + Math.sqrt(RHEAD * RHEAD - dz * dz) + 0.05, dz, { cast: false });
     h.rotation.x = Math.asin(dz / RHEAD);
   });
-  // on/off button on top of the handle, under the thumb
-  const BTN_X = -16;
-  add(device, new THREE.CylinderGeometry(5.5, 5.5, 1.2, 40), M.black, BTN_X, HC + RH + 0.2, 0);
-  add(device, new THREE.CylinderGeometry(4.2, 4.6, 2.2, 40), mat({ color: 0x2b2e33, roughness: 0.8 }), BTN_X, HC + RH + 1.6, 0);
+  // on/off button on top of the head, just ahead of the neck, under the thumb
+  const BTN_X = -8;
+  add(device, rbox(11, 1.6, 15, 0.8), M.caseOrange, BTN_X, HC + RHEAD + 0.4, 0);   // raised rim
+  add(device, new THREE.CylinderGeometry(4.2, 4.6, 2.2, 40), mat({ color: 0x2b2e33, roughness: 0.8 }), BTN_X, HC + RHEAD + 1.4, 0);
   // lanyard loop at the tail
   const loop = add(device, new THREE.TorusGeometry(5, 1.4, 16, 40), M.strap, X_TAIL - 8, HC, 0);
   loop.rotation.x = Math.PI / 2;
@@ -371,17 +371,17 @@ p { margin: 0; max-width: 65ch; }
   put(new THREE.BoxGeometry(13, 1.6, 30), M.buzzBoard, GX, HC + 12, 0);
   put(new THREE.CylinderGeometry(6, 6, 9, 40), M.black, GX, HC + 17.3, 0);
   // power bank in the handle, its output end facing forward
-  const bank = put(along(new THREE.CylinderGeometry(12, 12, 95, 64)), M.bank, -73, HC, 0);
-  put(along(new THREE.CylinderGeometry(12.1, 12.1, 3, 64)), M.bankCap, -27, HC, 0);
+  const bank = put(along(new THREE.CylinderGeometry(12, 12, 95, 64)), M.bank, -83.5, HC, 0);
+  put(along(new THREE.CylinderGeometry(12.1, 12.1, 3, 64)), M.bankCap, -37.5, HC, 0);
   // USB cable with inline switch: plug into the bank, switch under the button, plug into the board
-  put(rbox(10, 7.5, 13, 2), M.plug, -20.5, HC, 0);
-  put(rbox(22, 8, 11, 2.5), M.plug, BTN_X, HC + 7.5, 0);
+  put(rbox(10, 7.5, 13, 2), M.plug, -31, HC, 0);
+  put(rbox(22, 8, 11, 2.5), M.plug, BTN_X, HC + 15, 0);
   function wire(points, color, r = 0.55) {
     const curve = new THREE.CatmullRomCurve3(points.map((q) => new THREE.Vector3(...q)));
     put(new THREE.TubeGeometry(curve, 60, r, 8, false), mat({ color, roughness: 0.45 }), 0, 0, 0);
   }
-  wire([[-16, HC + 2, 0], [-10, HC + 5, 4], [-14, HC + 9, 6]], 0x2a2a2a, 1.6);
-  wire([[-5, HC + 7.5, 0], [0, HC + 2, -6], [-2, HC - 8, 4], [4, HC - 12, 2], [XB.x - 13, XB.y + 1.8, 0]], 0x2a2a2a, 1.6);
+  wire([[-26, HC + 1, 0], [-22, HC + 8, 4], [-19, HC + 15, 0]], 0x2a2a2a, 1.6);
+  wire([[3, HC + 15, 0], [7, HC + 8, -9], [2, HC - 4, -11], [XB.x - 13, XB.y + 1.8, 0]], 0x2a2a2a, 1.6);
   // jumper wires: sensor to board, buzzer to board
   wire([[X_FRONT - 15.5, HC - 4, -6], [24, HC - 1, -8], [XB.x - 7.6, XB.y + 19, -7.6]], 0xd13a2c);
   wire([[X_FRONT - 15.5, HC - 4, -2], [25, HC - 3, -6], [XB.x - 5.06, XB.y + 19, -7.6]], 0x1a1a1a);
@@ -415,6 +415,7 @@ p { margin: 0; max-width: 65ch; }
   // a rounded tip, a fuller pad, and a nail that follows the fingertip's curve.
   const hand = new THREE.Group();
   device.add(hand);
+  hand.position.x = -14;   // fist on the handle, thumb reaching the button
   const SKIN = new THREE.Color(0x9b5f42);
   const skin = mat({ color: 0xb87652, roughness: 0.55, sheen: 0.5, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffc9b0), clearcoat: 0.08 });
   const skinVC = skin.clone();
@@ -603,15 +604,15 @@ p { margin: 0; max-width: 65ch; }
   const TAGS = [
     { mode: 'main', at: [X_FRONT, HC + RHEAD - 2, -12], title: 'Sensor window', sub: 'Aim this end' },
     { mode: 'main', at: [GX, HC + RHEAD + 1, 0], title: 'Buzzer grille', sub: 'Faces up' },
-    { mode: 'main', at: [BTN_X, HC + RH + 3, 0], title: 'On/off button', sub: 'Under the thumb' },
+    { mode: 'main', at: [BTN_X, HC + RHEAD + 3, 0], title: 'On/off button', sub: 'Under the thumb' },
     { mode: 'main', at: [X_TAIL - 8, HC + 6, 0], title: 'Lanyard loop', hideWithHand: true },
     { mode: 'main', at: [X_TAIL + 2, HC - RH, 0], title: 'Tail cap', sub: 'Comes off to charge', hideWithHand: true },
     { mode: 'inside', at: [X_FRONT - 9, HC + 11, 12], title: 'LiDAR sensor' },
     { mode: 'inside', at: [XB.x, XB.y - 1, -10], title: 'XIAO ESP32-S3', sub: 'Pins already on' },
     { mode: 'inside', at: [GX + 4, HC + 23, -12], title: 'Buzzer module' },
-    { mode: 'inside', at: [-73, HC - 12, 0], title: 'Lipstick power bank' },
-    { mode: 'inside', at: [BTN_X, HC + 12, 0], title: 'USB cable with switch' },
-    { mode: 'compare', at: [0, HC + 30, 0], title: 'Flashlight', sub: '17 × 5 × 5 cm · no soldering' },
+    { mode: 'inside', at: [-83.5, HC - 12, 0], title: 'Lipstick power bank' },
+    { mode: 'inside', at: [BTN_X - 6, HC + 19, 0], title: 'USB cable with switch' },
+    { mode: 'compare', at: [0, HC + 30, 0], title: 'Flashlight', sub: '19 × 5 × 5 cm · no soldering' },
     { mode: 'compare', at: [0, 44, OZ1], title: 'Wand', sub: '16 × 3 × 5 cm · no soldering' },
     { mode: 'compare', at: [-10, 38, OZ2], title: 'First version', sub: '12 × 6.5 × 4 cm · no soldering' },
   ].map((t) => {

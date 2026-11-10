@@ -105,6 +105,7 @@ Two alternative designs, also as 3D pictures:
   same no-solder parts in a printed case, with an XIAO ESP32-S3 board, an on/off button under the
   thumb, and the buzzer grille facing up. The firmware picks the XIAO's pins by itself.
   Its parts list, wiring and assembly steps are in `docs/flashlight-parts.html`.
+  The printable case (OpenSCAD source and STLs) is in `hardware/flashlight-case/`.
 
 How the firmware and the app fit together, and what each sound means, is in
 `docs/software-design.html`.

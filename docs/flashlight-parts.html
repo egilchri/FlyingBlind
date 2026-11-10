@@ -207,7 +207,7 @@ td.mono { font-family: var(--font-mono); font-size: 0.92rem; }
 .steps li { max-width: 62ch; }
 
 footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
-footer a { color: var(--accent); }
+footer a, .notes a { color: var(--accent); }
 h3.group { margin: 8px 0 -4px; font: 700 1.05rem/1.3 var(--font-display); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 h3.group span { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .note-line { color: var(--muted); }
@@ -230,7 +230,7 @@ h3.group span { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text
   <dl class="summary">
     <div><dt>Expected total</dt><dd>$55–115</dd></div>
     <div><dt>Soldering</dt><dd>None</dd></div>
-    <div><dt>Size</dt><dd>17 × 5 × 5 cm</dd></div>
+    <div><dt>Size</dt><dd>19 × 5 × 5 cm</dd></div>
     <div><dt>Battery</dt><dd>~8 h (estimate)</dd></div>
   </dl>
 
@@ -341,9 +341,9 @@ h3.group span { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text
         <div class="part-body">
           <div class="part-top"><label class="part-name" id="n-case" for="p-case">3D-printed case</label><span class="price">$0–25</span></div>
           <ul class="notes">
-            <li>The flashlight body: head, handle and a tail cap that comes off for charging.</li>
-            <li>Many public libraries have a makerspace that prints for free or a few dollars. Online print services charge more.</li>
-            <li><strong>The print file isn't made yet.</strong> It will be designed around the parts you buy, so it's worth getting the parts first.</li>
+            <li>Three parts: the body (head, neck and handle in one piece), a front bezel that holds the sensor, and a tail cap with the lanyard loop. They print without supports, in about 8 hours and 55 g of PLA on a Bambu A1.</li>
+            <li>The <a href="https://github.com/egilchri/FlyingBlind/tree/main/hardware/flashlight-case">print files</a> are ready to print. Many public libraries have a makerspace that prints for free or a few dollars.</li>
+            <li><span class="check">Check:</span> measure the power bank and the switch cable you buy against the sizes listed with the print files. They're easy to change before printing.</li>
           </ul>
         </div>
       </li>
@@ -365,9 +365,9 @@ h3.group span { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text
     <ol class="steps">
       <li>Load the firmware onto the board first (see below), while it's easy to reach.</li>
       <li>Push the wires onto the board's pins as in the table below.</li>
-      <li>Fit the sensor behind the window at the front of the head, lenses facing out. Then fit the board on the floor of the head behind it, and the buzzer module under the grille.</li>
-      <li>Plug the switch cable into the board, fold the spare cable into the neck, and push its button through the hole on top of the handle.</li>
-      <li>Slide the power bank into the handle from the tail, plug it in, and put the tail cap on.</li>
+      <li>Stick the board to the floor of the head and the buzzer module under the grille with foam tape, working through the open front. Then press the sensor into the pocket on the back of the bezel, lenses facing the window, and press the bezel into the front. The notch on its rim goes at the top.</li>
+      <li>Plug the switch cable into the board, fit its switch under the opening on top of the head with foam tape so the button sits in the opening, and fold the spare cable into the neck.</li>
+      <li>Pull the cable's USB-A plug out through the tail, plug it into the power bank, slide the bank into the handle, and press the tail cap in.</li>
       <li>Click the button. You should hear a short chirp, then a tone as soon as the sensor sees something.</li>
     </ol>
   </section>
