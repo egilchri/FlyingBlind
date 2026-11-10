@@ -97,12 +97,21 @@ BLECharacteristic *reading = nullptr;
 bool connected = false;
 
 class ServerCallbacks : public BLEServerCallbacks {
+  // Ask the phone for a short connection interval (7.5-15 ms) so readings
+  // arrive with little delay. Units are 1.25 ms; the phone may refuse.
+  // The ESP32 and the ESP32-S3 use different Bluetooth stacks in core 3.x
+  // (Bluedroid and NimBLE), and each passes the connection differently.
+#if defined(CONFIG_NIMBLE_ENABLED)
+  void onConnect(BLEServer *server, ble_gap_conn_desc *desc) override {
+    connected = true;
+    server->updateConnParams(desc->conn_handle, 6, 12, 0, 400);
+  }
+#else
   void onConnect(BLEServer *server, esp_ble_gatts_cb_param_t *param) override {
     connected = true;
-    // Ask the phone for a short connection interval (7.5-15 ms) so readings
-    // arrive with little delay. Units are 1.25 ms; the phone may refuse.
     server->updateConnParams(param->connect.remote_bda, 6, 12, 0, 400);
   }
+#endif
   void onDisconnect(BLEServer *server) override {
     connected = false;
     BLEDevice::startAdvertising();  // be ready for the phone to reconnect
