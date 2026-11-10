@@ -512,19 +512,42 @@ p { margin: 0; max-width: 65ch; }
   digit({ base: [-6, -12.5, 20], dir: FD, palmar: PAD_UP, lengths: [44, 27, 20], bends: [1.45, 1.25, 0.5], r0: 9.0, rTip: 7.3 });
   digit({ base: [-23, -12.5, 19], dir: FD, palmar: PAD_UP, lengths: [41, 26, 19], bends: [1.5, 1.35, 0.55], r0: 8.6, rTip: 7.0 });
   digit({ base: [-38, -10, 12], dir: [0.05, 0, 1], palmar: PAD_UP, lengths: [33, 20, 17], bends: [1.65, 1.35, 0.6], r0: 7.6, rTip: 6.2 });
-  // thumb: from the base of the palm, forward along the left side
-  digit({ base: [-50, -5, -35], dir: [1, 0.62, 0.05], palmar: [0, -0.15, 1], lengths: [28, 27, 22], bends: [0.25, 0.22, 0.2], r0: 10.5, rTip: 8.2, knuckleW: 8 });
-  // palm, thumb pad, heel of the hand
-  const palmYaw = Math.atan2(0.55, 0.84);
-  blobH([-14, -15, -14], [41, 12, 38], palmYaw);
-  blobH([-12, -13, 10], [46, 10.5, 14], 0.1);
-  blobH([-26, -11, -36], [22, 13, 15], 0.5);
-  blobH([-44, -15, -26], [17, 12.5, 24], palmYaw);
+  // thumb: from the thumb pad, forward along the near side of the case,
+  // its nail toward the viewer and its pad resting on the case
+  const TH_BASE = [-48, -9, -36], TH_DIR = new THREE.Vector3(1, 0.42, 0.08).normalize();
+  digit({ base: TH_BASE, dir: TH_DIR.toArray(), palmar: [0, -0.3, 1], lengths: [24, 22, 19], bends: [0.1, 0.12, 0.1], r0: 10, rTip: 7.8, knuckleW: 8 });
+  // palm: a rounded slab under the case, from the knuckles back to the wrist
+  const PALM_YAW = 0.2;
+  // A "pillow": a sphere pushed out toward a rounded square in plan, but
+  // still round in profile, so the palm has soft edges and no flat sides.
+  const pillow = (e) => {
+    const g = new THREE.SphereGeometry(1, 64, 40), a = g.attributes.position;
+    for (let i = 0; i < a.count; i++) {
+      const f = (v) => Math.sign(v) * Math.abs(v) ** e;
+      a.setXYZ(i, f(a.getX(i)), a.getY(i), f(a.getZ(i)));
+    }
+    g.computeVertexNormals();
+    return g;
+  };
+  const palm = putH(new THREE.Mesh(pillow(0.55), skin));
+  palm.scale.set(33, 11, 37);
+  palm.position.set(-16, -13, -15);
+  palm.rotation.y = PALM_YAW;
+  // thumb pad: a long soft mound running along the base of the thumb
+  const thenar = putH(new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), skin));
+  thenar.position.copy(new THREE.Vector3(...TH_BASE).addScaledVector(TH_DIR, 2)).add(new THREE.Vector3(2, -3, 4));
+  thenar.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), TH_DIR);
+  thenar.scale.set(24, 12, 13);
+  // heel of the hand on the little-finger side
+  const hypo = putH(new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), skin));
+  hypo.position.set(-42, -15, -40);
+  hypo.scale.set(13, 11, 20);
+  hypo.rotation.y = PALM_YAW;
   // wrist and forearm, going back and to the left
-  const WR = [-46, -18, -52];
-  const fdir = new THREE.Vector3(-0.5, -0.3, -0.8).normalize();
+  const WR = [-34, -18, -50];
+  const fdir = new THREE.Vector3(-0.45, -0.3, -0.84).normalize();
   const EL = new THREE.Vector3(...WR).addScaledVector(fdir, 230);
-  limb(WR, EL.toArray(), 24, 31, skin);
+  limb(WR, EL.toArray(), 19, 29, skin);
   const s0 = new THREE.Vector3(...WR).addScaledVector(fdir, 70), s1 = new THREE.Vector3(...WR).addScaledVector(fdir, 260);
   limb(s0.toArray(), s1.toArray(), 34, 37, sleeveMat);
 
