@@ -104,6 +104,7 @@ Two alternative designs, also as 3D pictures:
 - `docs/flashlight-scanner.html`: held like a flashlight, so it points where the arm points. The
   same no-solder parts in a printed case, with an XIAO ESP32-S3 board, an on/off button under the
   thumb, and the buzzer grille facing up. Needs a small firmware change for the XIAO's pins.
+  Its parts list, wiring and assembly steps are in `docs/flashlight-parts.html`.
 
 Note: the sensor's beam is infrared and invisible, and it is wider than a laser meter's dot (about
 2° for the TF-Luna), so it reads the nearest large surface rather than a pinpoint.

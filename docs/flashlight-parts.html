@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FlyingBlind Flashlight Parts List</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single-column bill of materials, like a parts sheet in a kit box. Each part is a row with a checkbox, price and search term. */
+:root {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --ink: #15201b;
+  --muted: #56645d;
+  --line: #d3dcd7;
+  --accent: #0d7246;       /* solder-mask green */
+  --accent-soft: #e1efe7;
+  --copper: #9a5420;       /* warnings: things to check before buying */
+  --copper-soft: #f7ebe0;
+  --pcb: #1c2a24;          /* wiring diagram */
+  --pcb-ink: #dfe9e3;
+  --wire-pwr: #d33a2c;
+  --wire-gnd: #1d1f22;
+  --wire-tx: #1f9a49;
+  --wire-rx: #2f6fd6;
+  --wire-sig: #e08a0b;
+  --wire-usb: #8a949c;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1513; --surface: #17201c; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832;
+    --accent: #52c58f; --accent-soft: #1b3027; --copper: #e3a06a; --copper-soft: #33251a;
+    --pcb: #22322b; --wire-gnd: #9aa3ad; --wire-usb: #c3cbd2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1513; --surface: #17201c; --ink: #e5ece8; --muted: #9aa9a1; --line: #2b3832;
+  --accent: #52c58f; --accent-soft: #1b3027; --copper: #e3a06a; --copper-soft: #33251a;
+    --pcb: #22322b; --wire-gnd: #9aa3ad; --wire-usb: #c3cbd2;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+}
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+header { display: flex; flex-direction: column; gap: 12px; }
+.eyebrow {
+  font: 500 0.78rem/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+h1 {
+  font: 800 clamp(2rem, 6vw, 2.9rem)/1.05 var(--font-display);
+  font-stretch: 85%;
+  margin: 0;
+  text-wrap: balance;
+}
+h2 {
+  font: 700 1.35rem/1.2 var(--font-display);
+  font-stretch: 90%;
+  margin: 0;
+  text-wrap: balance;
+}
+p { margin: 0; max-width: 65ch; }
+.lede { font-size: 1.08rem; color: var(--muted); }
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  padding: 16px 0;
+  border-block: 1px solid var(--line);
+}
+.summary div { display: flex; flex-direction: column; gap: 2px; }
+.summary dt { font: 500 0.75rem/1.2 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.summary dd { margin: 0; font: 700 1.25rem/1.2 var(--font-display); font-variant-numeric: tabular-nums; }
+
+section { display: flex; flex-direction: column; gap: 16px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.progress { font: 500 0.85rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.parts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.part { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; padding: 18px 18px 20px; }
+.part + .part { border-top: 1px solid var(--line); }
+.part input[type="checkbox"] { width: 22px; height: 22px; margin: 3px 0 0; accent-color: var(--accent); cursor: pointer; }
+.part-body { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.part-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.part-name { font: 600 1.08rem/1.3 var(--font-body); cursor: pointer; }
+.price { font: 500 0.95rem var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.part.done .part-name { text-decoration: line-through; text-decoration-color: var(--muted); color: var(--muted); }
+
+.search { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.search-label { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.term {
+  font: 500 0.92rem/1.3 var(--font-mono);
+  background: var(--accent-soft);
+  color: var(--ink);
+  padding: 5px 9px;
+  border-radius: 6px;
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+.copy {
+  font: 500 0.8rem var(--font-mono);
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.copy:hover { background: var(--accent-soft); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.notes { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; color: var(--ink); }
+.notes li { max-width: 62ch; }
+.check { color: var(--copper); font-weight: 600; }
+
+.callout {
+  background: var(--copper-soft);
+  border: 1px solid color-mix(in srgb, var(--copper) 35%, transparent);
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.callout h3 { margin: 0; font: 700 1rem var(--font-display); color: var(--copper); }
+
+.pins-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 440px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font: 500 0.72rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td.mono { font-family: var(--font-mono); font-size: 0.92rem; }
+
+.diagram-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.wiring { display: block; width: 100%; min-width: 640px; height: auto; font-family: var(--font-mono); }
+.wiring .pcb { fill: var(--pcb); }
+.wiring .module { fill: #b9c0c7; }
+.wiring .antenna { fill: none; stroke: #c9a646; stroke-width: 2; }
+.wiring .usb { fill: #c9ced4; stroke: #8a929a; }
+.wiring .pcb-title { fill: var(--pcb-ink); font-size: 15px; font-weight: 500; letter-spacing: 0.06em; opacity: 0.75; }
+.wiring .pcb-small { fill: var(--pcb-ink); font-size: 10px; opacity: 0.6; }
+.wiring .pin { fill: #6f6a55; }
+.wiring .pin-used { fill: #e3bc4c; stroke: var(--surface); stroke-width: 1.5; }
+.wiring .pinlabel { fill: var(--pcb-ink); font-size: 10.5px; opacity: 0.45; }
+.wiring .pinlabel-used { fill: var(--pcb-ink); font-size: 12px; font-weight: 500; }
+.wiring .slabel { fill: var(--ink); font-size: 12px; font-weight: 500; }
+.wiring .slabel-dim { fill: var(--muted); font-size: 11px; }
+.wiring .part-box { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.wiring .part-title { fill: var(--ink); font: 600 14px var(--font-body); }
+.wiring .part-sub, .wiring .note { fill: var(--muted); font-size: 11px; }
+.wiring .lens-ring { fill: #2a2d31; }
+.wiring .lens { fill: #3b2a66; }
+.wiring .nc { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 3 3; }
+.wiring .buzz-pcb { fill: #2a4fa3; }
+.wiring .buzzer { fill: #111; }
+.wiring .buzzer-hole { fill: #444; }
+.wiring .buzz-label { fill: #ffffff; font-size: 13px; font-weight: 500; }
+.wiring .bank { fill: #2b2f35; }
+.wiring .bank-title { fill: #f1f3f5; font: 600 13px var(--font-body); }
+.wiring .bank-sub { fill: #aab2ba; font-size: 10.5px; }
+.wiring .w, .wiring .w-outline { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.wiring .w { stroke-width: 4; }
+.wiring .w-outline { stroke: var(--surface); stroke-width: 9; }
+.wiring .w-pwr { stroke: var(--wire-pwr); }
+.wiring .w-gnd { stroke: var(--wire-gnd); }
+.wiring .w-tx { stroke: var(--wire-tx); }
+.wiring .w-rx { stroke: var(--wire-rx); }
+.wiring .w-sig { stroke: var(--wire-sig); }
+.wiring .w-usb { stroke: var(--wire-usb); stroke-width: 7; }
+.wiring .tag text { fill: #ffffff; font-size: 11px; font-weight: 500; }
+.wiring .t-pwr rect { fill: var(--wire-pwr); }
+.wiring .t-gnd rect { fill: #3a3f45; }
+.wiring .t-tx rect { fill: var(--wire-tx); }
+.wiring .t-rx rect { fill: var(--wire-rx); }
+.wiring .t-sig rect { fill: #b86d00; }
+.wiring .t-usb rect { fill: #6c757d; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: 0.9rem; }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.legend i { width: 22px; height: 5px; border-radius: 3px; display: inline-block; }
+
+.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.steps li { max-width: 62ch; }
+
+footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+footer a { color: var(--accent); }
+h3.group { margin: 8px 0 -4px; font: 700 1.05rem/1.3 var(--font-display); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+h3.group span { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.note-line { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">FlyingBlind · no-solder flashlight</span>
+    <h1>Flashlight scanner parts list</h1>
+    <p class="lede">Everything needed to build the flashlight scanner: the sensor, a tiny board and a buzzer in the head, a lipstick power bank in the handle, and a click button under the thumb. Held like a flashlight, it points where your arm points. It all plugs together, with no soldering.</p>
+  </header>
+
+  <dl class="summary">
+    <div><dt>Expected total</dt><dd>$55–115</dd></div>
+    <div><dt>Soldering</dt><dd>None</dd></div>
+    <div><dt>Size</dt><dd>17 × 5 × 5 cm</dd></div>
+    <div><dt>Battery</dt><dd>~8 h (estimate)</dd></div>
+  </dl>
+
+  <section aria-labelledby="buy">
+    <div class="section-head">
+      <h2 id="buy">What to buy</h2>
+      <span class="progress" id="progress" aria-live="polite"></span>
+    </div>
+    <p>Tick items off as you order them. Your ticks are saved in this browser only. Copy each search term into Amazon.</p>
+    <h3 class="group">Electronics <span>everything plugs together</span></h3>
+    <ul class="parts">
+      <li class="part" data-id="lidar">
+        <input type="checkbox" id="p-lidar" aria-labelledby="n-lidar">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-lidar" for="p-lidar">TF-Luna LiDAR distance sensor</label><span class="price">$20–30</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">TF-Luna LiDAR Benewake</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>The distance sensor. It sits behind the window at the front of the head and measures 100 times a second.</li>
+            <li><span class="check">Check:</span> the listing says it <strong>includes a cable with Dupont ends</strong>, so it pushes straight onto the board's pins.</li>
+            <li>A TFmini-S also works. Other sensors won't, because the firmware only understands these two.</li>
+          </ul>
+        </div>
+      </li>
+      <li class="part" data-id="adapter">
+        <input type="checkbox" id="p-adapter" aria-labelledby="n-adapter">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-adapter" for="p-adapter">Sensor adapter cable <em>(only if needed)</em></label><span class="price">$3–8</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">1.25mm 6 pin to Dupont cable TF-Luna</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>Only buy this if the sensor comes with no cable, or one with bare wire ends.</li>
+          </ul>
+        </div>
+      </li>
+      <li class="part" data-id="xiao">
+        <input type="checkbox" id="p-xiao" aria-labelledby="n-xiao">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-xiao" for="p-xiao">Seeed XIAO ESP32-S3, pins already soldered on</label><span class="price">$8–12</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">XIAO ESP32S3 pre-soldered headers</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>The tiny computer (21 × 17.5 mm) that reads the sensor and plays the tone. Its small size is what keeps the head of the flashlight small.</li>
+            <li><span class="check">Check:</span> it says <strong>pre-soldered</strong> or <strong>with headers</strong>. The plain version comes with loose pins that need soldering.</li>
+            <li><span class="check">Check:</span> it's the <strong>ESP32-S3</strong>, not the ESP32-C3 or the "Sense" camera version.</li>
+          </ul>
+        </div>
+      </li>
+      <li class="part" data-id="buzzer">
+        <input type="checkbox" id="p-buzzer" aria-labelledby="n-buzzer">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-buzzer" for="p-buzzer">Passive buzzer module</label><span class="price">$2–6</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">passive piezo buzzer module 3 pin</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>Plays the tone. It sits under the grille on top of the head.</li>
+            <li><span class="check">Check:</span> it says <strong>passive</strong> (an active buzzer only plays one note) and comes as a <strong>module with pins</strong>.</li>
+          </ul>
+        </div>
+      </li>
+      <li class="part" data-id="wires">
+        <input type="checkbox" id="p-wires" aria-labelledby="n-wires">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-wires" for="p-wires">Jumper wires, female to female</label><span class="price">~$5</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">Dupont jumper wires female to female 10cm</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>For the buzzer: three wires. 10 cm is plenty inside the head.</li>
+          </ul>
+        </div>
+      </li>
+      <li class="part" data-id="splitter">
+        <input type="checkbox" id="p-splitter" aria-labelledby="n-splitter">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-splitter" for="p-splitter">Y splitter jumper (1 to 2)</label><span class="price">~$5</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">Dupont 1 to 2 female splitter jumper</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>The XIAO has only <strong>one ground pin</strong>, and both the sensor and the buzzer need ground. A Y jumper lets two wires share it, with no soldering.</li>
+            <li>Any 1-to-2 female splitter works. Packs usually include several.</li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+    <h3 class="group">Body and power <span>the flashlight itself</span></h3>
+    <ul class="parts">
+      <li class="part" data-id="bank">
+        <input type="checkbox" id="p-bank" aria-labelledby="n-bank">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-bank" for="p-bank">Lipstick power bank</label><span class="price">$10–15</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">lipstick power bank 2600mAh</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>Lives inside the handle and powers everything, for roughly 8 hours per charge (an estimate).</li>
+            <li><span class="check">Check:</span> it's <strong>no more than 25 mm across and 100 mm long</strong>, so it fits the handle.</li>
+            <li><span class="check">Check:</span> it has a <strong>USB-A socket</strong> for its output.</li>
+            <li><span class="check">Check:</span> if reviews say it <strong>switches itself off</strong> when powering small gadgets, pick another. The scanner draws very little current.</li>
+          </ul>
+        </div>
+      </li>
+      <li class="part" data-id="switchcable">
+        <input type="checkbox" id="p-switchcable" aria-labelledby="n-switchcable">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-switchcable" for="p-switchcable">Short USB-A to USB-C cable with an on/off switch</label><span class="price">$6–10</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">USB A to USB C cable with on off switch</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>Joins the power bank to the board. Its button pokes through the case under the thumb, so it clicks on and off like a flashlight.</li>
+            <li>Shorter is better, since the spare cable has to fold into the neck. Around 20–30 cm is usually the shortest sold.</li>
+            <li><span class="check">Check:</span> it's a <strong>push button</strong> you can feel click, not a slide switch or a touch sensor.</li>
+          </ul>
+        </div>
+      </li>
+      <li class="part" data-id="case">
+        <input type="checkbox" id="p-case" aria-labelledby="n-case">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-case" for="p-case">3D-printed case</label><span class="price">$0–25</span></div>
+          <ul class="notes">
+            <li>The flashlight body: head, handle and a tail cap that comes off for charging.</li>
+            <li>Many public libraries have a makerspace that prints for free or a few dollars. Online print services charge more.</li>
+            <li><strong>The print file isn't made yet.</strong> It will be designed around the parts you buy, so it's worth getting the parts first.</li>
+          </ul>
+        </div>
+      </li>
+      <li class="part" data-id="lanyard">
+        <input type="checkbox" id="p-lanyard" aria-labelledby="n-lanyard">
+        <div class="part-body">
+          <div class="part-top"><label class="part-name" id="n-lanyard" for="p-lanyard">Wrist lanyard</label><span class="price">$0–5</span></div>
+          <div class="search"><span class="search-label">Search</span><code class="term">wrist lanyard strap</code><button class="copy" type="button">Copy</button></div>
+          <ul class="notes">
+            <li>Loops through the tail so the scanner can't be dropped while sweeping.</li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+    <p class="note-line">Already have a sensor and buzzer from the wand or the first version? Reuse them.</p>
+  </section>
+  <section aria-labelledby="assemble">
+    <h2 id="assemble">Putting it together</h2>
+    <ol class="steps">
+      <li>Load the firmware onto the board first (see below), while it's easy to reach.</li>
+      <li>Push the wires onto the board's pins as in the table below.</li>
+      <li>Fit the sensor behind the window at the front of the head, lenses facing out. Then fit the board on the floor of the head behind it, and the buzzer module under the grille.</li>
+      <li>Plug the switch cable into the board, fold the spare cable into the neck, and push its button through the hole on top of the handle.</li>
+      <li>Slide the power bank into the handle from the tail, plug it in, and put the tail cap on.</li>
+      <li>Click the button. You should hear a short chirp, then a tone as soon as the sensor sees something.</li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="wiring">
+    <h2 id="wiring">Wiring</h2>
+    <p>Seven push-on wires, plus the USB cable. The XIAO's pins are labelled on the board, so find each one by name. The Y splitter joins the two ground wires onto the board's single GND pin.</p>
+    <div class="pins-scroll">
+      <table>
+        <thead><tr><th>From</th><th>To XIAO pin</th><th>What it carries</th></tr></thead>
+        <tbody>
+          <tr><td>Sensor pin 1 · +5V</td><td class="mono">5V</td><td>Power for the sensor</td></tr>
+          <tr><td>Sensor pin 4 · GND</td><td class="mono">GND (via splitter)</td><td>Ground</td></tr>
+          <tr><td>Sensor pin 3 · TXD</td><td class="mono">D7 (RX)</td><td>Distance readings</td></tr>
+          <tr><td>Sensor pin 2 · RXD</td><td class="mono">D6 (TX)</td><td>Settings (unused for now)</td></tr>
+          <tr><td>Sensor pins 5 and 6</td><td class="mono">nothing</td><td>Leaving pin 5 free keeps the sensor in the right mode</td></tr>
+          <tr><td>Buzzer S</td><td class="mono">D0</td><td>The tone</td></tr>
+          <tr><td>Buzzer +</td><td class="mono">3V3</td><td>Power for the buzzer</td></tr>
+          <tr><td>Buzzer −</td><td class="mono">GND (via splitter)</td><td>Ground</td></tr>
+          <tr><td>Switch cable</td><td class="mono">USB-C socket</td><td>Power for everything</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout" role="note">
+      <h3>Before switching on</h3>
+      <p>Check which wire is which on the sensor's cable, using the labels on the sensor or the seller's diagram. Don't rely on wire colors. Power on the wrong pin can damage the sensor. The sensor pin numbers come from a vendor's notes, not Benewake's official datasheet. Also check that the buzzer module is passive and marked S, + and −. Some are labelled I/O, VCC and GND instead.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="arrive">
+    <h2 id="arrive">Loading the firmware</h2>
+    <ol class="steps">
+      <li>Install the free Arduino IDE on the Mac, then add ESP32 support: Boards Manager → <strong>esp32 by Espressif</strong>. Choose <strong>XIAO_ESP32S3</strong> under Tools → Board.</li>
+      <li>Open <code class="term">firmware/lidar-ble/lidar-ble.ino</code> from the FlyingBlind repo. <strong>It still needs the XIAO pin settings</strong> (D7 and D6 for the sensor, D0 for the buzzer). That's a small change, to be made before the parts arrive.</li>
+      <li>Plug the board into the Mac with a normal USB-C cable that carries data, and click Upload. The XIAO needs no extra driver on a Mac.</li>
+      <li>The scanner works on its own. The phone app can still connect to it over Bluetooth as <strong>ESP32 LiDAR</strong> if you want speech as well.</li>
+    </ol>
+  </section>
+
+  <footer>
+    Prices are rough and vary by seller. This build is designed and written but not yet tested on real hardware, so expect some debugging the first time. 3D picture of the flashlight: <a href="flashlight-scanner.html">flashlight-scanner</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const KEY = 'flashlight-parts-ticked';
+  let ticked = {};
+  try { ticked = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { ticked = {}; }
+
+  const parts = Array.from(document.querySelectorAll('.part'));
+  const required = parts.filter((p) => p.dataset.id !== 'adapter');
+  const progress = document.getElementById('progress');
+
+  function render() {
+    for (const p of parts) {
+      const box = p.querySelector('input[type="checkbox"]');
+      box.checked = !!ticked[p.dataset.id];
+      p.classList.toggle('done', box.checked);
+    }
+    const n = required.filter((p) => ticked[p.dataset.id]).length;
+    progress.textContent = `${n} of ${required.length} essentials ordered`;
+  }
+
+  for (const p of parts) {
+    p.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+      ticked[p.dataset.id] = e.target.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(ticked)); } catch (err) { /* not saved; fine */ }
+      render();
+    });
+  }
+
+  for (const btn of document.querySelectorAll('.copy')) {
+    btn.addEventListener('click', () => {
+      const term = btn.parentElement.querySelector('.term');
+      const done = () => { btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500); };
+      const fallback = () => {
+        const r = document.createRange();
+        r.selectNodeContents(term);
+        const s = getSelection();
+        s.removeAllRanges();
+        s.addRange(r);
+        btn.textContent = 'Selected';
+        setTimeout(() => (btn.textContent = 'Copy'), 1500);
+      };
+      try {
+        navigator.clipboard.writeText(term.textContent).then(done, fallback);
+      } catch (e) { fallback(); }
+    });
+  }
+
+  render();
+})();
+</script>
+
+</body>
+</html>
