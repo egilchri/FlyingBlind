@@ -100,6 +100,7 @@ Two alternative designs, also as 3D pictures:
   battery. Smallest, but needs soldering and a 3D-printed case.
 - `docs/wand-scanner.html`: a lipstick power bank as a flashlight-style handle, with the parts on a
   ruler. No soldering; same wiring and firmware as the first version.
+  Its parts list and assembly steps are in `docs/wand-parts.html`.
 
 Note: the sensor's beam is infrared and invisible, and it is wider than a laser meter's dot (about
 2° for the TF-Luna), so it reads the nearest large surface rather than a pinpoint.
