@@ -213,12 +213,15 @@ h3.group span { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text
 .note-line { color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.back { font: 500 0.9rem var(--font-body); color: var(--accent); text-decoration: none; }
+.back:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
 <div class="wrap">
   <header>
+    <a class="back" href="flashlight-scanner.html">← The flashlight scanner</a>
     <span class="eyebrow">FlyingBlind · no-solder flashlight</span>
     <h1>Flashlight scanner parts list</h1>
     <p class="lede">Everything needed to build the flashlight scanner: the sensor, a tiny board and a buzzer in the head, a lipstick power bank in the handle, and a click button under the thumb. Held like a flashlight, it points where your arm points. It all plugs together, with no soldering.</p>
@@ -398,7 +401,7 @@ h3.group span { font: 500 0.75rem var(--font-mono); letter-spacing: 0.06em; text
     <h2 id="arrive">Loading the firmware</h2>
     <ol class="steps">
       <li>Install the free Arduino IDE on the Mac, then add ESP32 support: Boards Manager → <strong>esp32 by Espressif</strong>. Choose <strong>XIAO_ESP32S3</strong> under Tools → Board.</li>
-      <li>Open <code class="term">firmware/lidar-ble/lidar-ble.ino</code> from the FlyingBlind repo. <strong>It still needs the XIAO pin settings</strong> (D7 and D6 for the sensor, D0 for the buzzer). That's a small change, to be made before the parts arrive.</li>
+      <li>Open <code class="term">firmware/lidar-ble/lidar-ble.ino</code> from the FlyingBlind repo. It picks the XIAO's pins by itself (D7 and D6 for the sensor, D0 for the buzzer) once the XIAO is chosen as the board. Leave Tools → <strong>USB CDC On Boot</strong> set to Enabled, its default for the XIAO.</li>
       <li>Plug the board into the Mac with a normal USB-C cable that carries data, and click Upload. The XIAO needs no extra driver on a Mac.</li>
       <li>The scanner works on its own. The phone app can still connect to it over Bluetooth as <strong>ESP32 LiDAR</strong> if you want speech as well.</li>
     </ol>

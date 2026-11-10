@@ -130,6 +130,9 @@ p { margin: 0; max-width: 65ch; }
 .vs dd { margin: 0; font: 700 1.15rem var(--font-display); font-variant-numeric: tabular-nums; }
 .size { font: 500 0.9rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 .notes a { color: var(--accent); }
+.links { display: flex; flex-wrap: wrap; gap: 10px; }
+.links a { font: 600 0.95rem var(--font-body); color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 6px 14px; text-decoration: none; }
+.links a:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 </style>
 </head>
 <body>
@@ -138,6 +141,10 @@ p { margin: 0; max-width: 65ch; }
     <span class="eyebrow">FlyingBlind · no-solder flashlight</span>
     <h1>The flashlight scanner</h1>
     <p class="lede">Held like a flashlight, so you always know where it points: it points where your arm points. Sweep it across the room and the tone tells you how far away things are. Everything plugs together inside a printed case, with no soldering.</p>
+    <nav class="links" aria-label="More about this design">
+      <a href="flashlight-parts.html">Parts list and wiring →</a>
+      <a href="software-design.html">How the software works →</a>
+    </nav>
   </header>
 
   <dl class="vs">
@@ -177,7 +184,7 @@ p { margin: 0; max-width: 65ch; }
       <h2>Parts and trade-offs</h2>
       <ul>
         <li><strong>Same as the wand:</strong> TF-Luna sensor, buzzer module, jumper wires and a lipstick power bank.</li>
-        <li><strong>XIAO ESP32-S3 with its pins already soldered on,</strong> in place of the larger ESP32 board, so the head stays small. It needs a small firmware change for its pin numbers.</li>
+        <li><strong>XIAO ESP32-S3 with its pins already soldered on,</strong> in place of the larger ESP32 board, so the head stays small. The same firmware runs on it; it picks the XIAO's pins by itself.</li>
         <li><strong>A short USB cable with an inline on/off switch</strong> joins the power bank to the board. Its button pokes through the case under the thumb.</li>
         <li><strong>A 3D-printed case</strong> (a library makerspace or an online print service). The tail cap comes off to slide the power bank out for charging.</li>
         <li>This is a 3D model at true size, not a photo or a finished design. Weight and battery life are estimates.</li>

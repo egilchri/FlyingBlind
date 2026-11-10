@@ -4,24 +4,31 @@
 //
 // SKETCH: written from the datasheets, not yet run on hardware.
 //
-// Board:   ESP32-WROOM-32 DevKit (38 pin). Other ESP32 variants work if you
-//          change the pin numbers below to match their layout.
+// Board:   Either of these. The pins are picked automatically from the board
+//          chosen under Tools -> Board:
+//            - ESP32-WROOM-32 DevKit (38 pin): first version and wand
+//            - Seeed XIAO ESP32-S3 ("XIAO_ESP32S3"): flashlight version
+//          Other ESP32 boards work if you add their pin numbers below.
 // Library: none beyond the ESP32 Arduino core (Boards Manager: "esp32" by
 //          Espressif). Works with core 2.x and 3.x.
 //
 // Wiring (TF-Luna, pins numbered from the left with the connector facing you):
-//   TF-Luna pin 1  +5V   -> ESP32 5V (VIN)
-//   TF-Luna pin 2  RXD   -> ESP32 GPIO 17 (TX2)
-//   TF-Luna pin 3  TXD   -> ESP32 GPIO 16 (RX2)
-//   TF-Luna pin 4  GND   -> ESP32 GND
-//   TF-Luna pin 5  CFG   -> leave unconnected (UART mode)
+//                         DevKit             XIAO ESP32-S3
+//   TF-Luna pin 1  +5V -> 5V (VIN)           5V
+//   TF-Luna pin 2  RXD -> GPIO 17 (TX2)      D6 (TX)
+//   TF-Luna pin 3  TXD -> GPIO 16 (RX2)      D7 (RX)
+//   TF-Luna pin 4  GND -> GND                GND (shared with the buzzer
+//                                             through a Y splitter: the XIAO
+//                                             has only one GND pin)
+//   TF-Luna pin 5  CFG -> leave unconnected (UART mode)
 // The TFmini-S is the same, but its cable colors are: red 5V, black GND,
 // white RXD, green TXD. Both sensors use 3.3 V logic, so no level shifter is needed.
 //
 // Wiring (passive buzzer module, 3 pins):
-//   S (signal)  -> ESP32 GPIO 25
-//   +           -> ESP32 3V3
-//   -           -> ESP32 GND
+//                     DevKit      XIAO ESP32-S3
+//   S (signal)  ->    GPIO 25     D0
+//   +           ->    3V3         3V3
+//   -           ->    GND         GND (through the Y splitter)
 //
 // What you hear:
 //   - At power-on: three rising beeps.
@@ -49,8 +56,26 @@
 #define SERVICE_UUID "2bb8a36a-863a-4b3a-b494-828a89dafdb8"
 #define READING_UUID "9a61290c-d108-406a-9ce2-10a133f5d5b8"
 
-const int LIDAR_RX = 16;  // ESP32 pin receiving from the sensor's TXD
-const int LIDAR_TX = 17;  // ESP32 pin sending to the sensor's RXD
+// ---- pins, chosen by the board selected under Tools -> Board ----
+#if defined(ARDUINO_XIAO_ESP32S3)
+// Seeed XIAO ESP32-S3: use the names printed on the board.
+const int LIDAR_RX = D7;    // GPIO 44, receives from the sensor's TXD
+const int LIDAR_TX = D6;    // GPIO 43, sends to the sensor's RXD
+const int BUZZER_PIN = D0;  // GPIO 1
+// D6/D7 are also the chip's default debug serial port. With "USB CDC On Boot"
+// enabled (the XIAO's default), debug messages go over USB instead, leaving
+// D6/D7 free for the sensor. Without it, debug text would be sent to the sensor.
+#if !ARDUINO_USB_CDC_ON_BOOT
+#error "Set Tools -> USB CDC On Boot -> Enabled for the XIAO ESP32-S3"
+#endif
+#elif defined(CONFIG_IDF_TARGET_ESP32)
+// ESP32-WROOM-32 DevKit.
+const int LIDAR_RX = 16;    // RX2, receives from the sensor's TXD
+const int LIDAR_TX = 17;    // TX2, sends to the sensor's RXD
+const int BUZZER_PIN = 25;
+#else
+#error "No pin numbers for this board yet. Add them in the pins section of lidar-ble.ino."
+#endif
 const uint32_t LIDAR_BAUD = 115200;
 
 // The sensor measures at 100 Hz. Sending every 20 ms (50 Hz) is plenty for a
@@ -62,7 +87,6 @@ const uint16_t MIN_STRENGTH = 100;
 
 // ---- buzzer settings: change these to taste ----
 const bool BUZZER_ON = true;      // false = phone-only, like before
-const int BUZZER_PIN = 25;
 const int VOLUME_PERCENT = 100;   // 1-100. A passive buzzer is loudest at 100.
 ToneFollower pitch;               // range and pitch settings: see tone_logic.h
 // To change them, add lines like these at the start of setup():

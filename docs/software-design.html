@@ -95,12 +95,15 @@ td.mono { font-family: var(--font-mono); font-size: 0.88rem; white-space: nowrap
 footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
 footer a, a { color: var(--accent); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.back { font: 500 0.9rem var(--font-body); color: var(--accent); text-decoration: none; }
+.back:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
 <div class="wrap">
   <header>
+    <a class="back" href="flashlight-scanner.html">← The flashlight scanner</a>
     <span class="eyebrow">FlyingBlind · how the software works</span>
     <h1>Software design overview</h1>
     <p class="lede">Two programs work together. The firmware runs on the scanner itself and turns distance into a tone on its own buzzer, so no phone is needed. The phone app is optional: it can speak distances, play the tone through the phone, and work with other laser meters.</p>
@@ -223,7 +226,7 @@ footer a, a { color: var(--accent); }
       <table>
         <thead><tr><th>File</th><th>What it does</th></tr></thead>
         <tbody>
-          <tr><td class="mono">firmware/lidar-ble/lidar-ble.ino</td><td>The scanner's program: sensor, buzzer and Bluetooth.</td></tr>
+          <tr><td class="mono">firmware/lidar-ble/lidar-ble.ino</td><td>The scanner's program: sensor, buzzer and Bluetooth. Picks its pins from the board chosen in the Arduino IDE (ESP32 DevKit or XIAO ESP32-S3).</td></tr>
           <tr><td class="mono">firmware/lidar-ble/tone_logic.h</td><td>Distance to pitch, glide, silence and the fault tick. Plain C++ so it's tested on a computer.</td></tr>
           <tr><td class="mono">firmware/test/tone_logic_test.cpp</td><td>17 tests of the tone rules, run on the Mac.</td></tr>
           <tr><td class="mono">app.js</td><td>The app's screen, settings, and what to do with each reading.</td></tr>
@@ -239,7 +242,7 @@ footer a, a { color: var(--accent); }
 
   <div class="callout" role="note">
     <h3>Not yet tried on real hardware</h3>
-    <p>The firmware and the scanner's Bluetooth driver were written from the sensor's datasheet and haven't run on a real board yet, so expect some debugging the first time. The flashlight version also needs its pin numbers set for the XIAO board. The Leica and Bosch drivers follow community notes and haven't been checked against real meters.</p>
+    <p>The firmware and the scanner's Bluetooth driver were written from the sensor's datasheet and haven't run on a real board yet, so expect some debugging the first time. The Leica and Bosch drivers follow community notes and haven't been checked against real meters.</p>
   </div>
 
   <footer>

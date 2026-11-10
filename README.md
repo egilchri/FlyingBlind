@@ -103,7 +103,7 @@ Two alternative designs, also as 3D pictures:
   Its parts list and assembly steps are in `docs/wand-parts.html`.
 - `docs/flashlight-scanner.html`: held like a flashlight, so it points where the arm points. The
   same no-solder parts in a printed case, with an XIAO ESP32-S3 board, an on/off button under the
-  thumb, and the buzzer grille facing up. Needs a small firmware change for the XIAO's pins.
+  thumb, and the buzzer grille facing up. The firmware picks the XIAO's pins by itself.
   Its parts list, wiring and assembly steps are in `docs/flashlight-parts.html`.
 
 How the firmware and the app fit together, and what each sound means, is in
