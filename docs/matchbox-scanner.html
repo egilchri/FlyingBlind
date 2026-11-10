@@ -505,68 +505,63 @@ p { margin: 0; max-width: 65ch; }
     return m;
   }
 
-  // HAND_POSE (tuned by eye; units mm, scanner coordinates)
-  const FD = [0.12, 0, 1];      // fingers point across the scanner, a little forward
-  const PAD_UP = [0, 1, 0];     // finger pads face up, toward the scanner
-  digit({ base: [11, -12, 20], dir: FD, palmar: PAD_UP, lengths: [40, 24, 19], bends: [1.45, 1.2, 0.5], r0: 8.6, rTip: 7.0 });
-  digit({ base: [-6, -12.5, 20], dir: FD, palmar: PAD_UP, lengths: [44, 27, 20], bends: [1.45, 1.25, 0.5], r0: 9.0, rTip: 7.3 });
-  digit({ base: [-23, -12.5, 19], dir: FD, palmar: PAD_UP, lengths: [41, 26, 19], bends: [1.5, 1.35, 0.55], r0: 8.6, rTip: 7.0 });
-  digit({ base: [-38, -10, 12], dir: [0.05, 0, 1], palmar: PAD_UP, lengths: [33, 20, 17], bends: [1.65, 1.35, 0.6], r0: 7.6, rTip: 6.2 });
-  // thumb: from the thumb pad, forward along the near side of the case,
-  // its nail toward the viewer and its pad resting on the case
-  const TH_BASE = [-48, -9, -36], TH_DIR = new THREE.Vector3(1, 0.42, 0.08).normalize();
-  digit({ base: TH_BASE, dir: TH_DIR.toArray(), palmar: [0, -0.3, 1], lengths: [24, 22, 19], bends: [0.1, 0.12, 0.1], r0: 10, rTip: 7.8, knuckleW: 8 });
-  // palm: a rounded slab under the case, from the knuckles back to the wrist
-  const PALM_YAW = 0.2;
-  // A "pillow": a sphere pushed out toward a rounded square in plan, but
-  // still round in profile, so the palm has soft edges and no flat sides.
-  const pillow = (e) => {
-    const g = new THREE.SphereGeometry(1, 64, 40), a = g.attributes.position;
-    for (let i = 0; i < a.count; i++) {
-      const f = (v) => Math.sign(v) * Math.abs(v) ** e;
-      a.setXYZ(i, f(a.getX(i)), a.getY(i), f(a.getZ(i)));
+  // HAND_POSE: left hand, palm up, loosely closed around the back half of
+  // the case so the sensor end pokes out forward between the thumb and the
+  // index finger. Index and middle fingers wrap up the right-hand side; ring
+  // and little fingers curl into a fist behind the case; the thumb rises up
+  // the near side and rests on top, on the raised arrow.
+  // (units mm, scanner coordinates: +x = the way the sensor points)
+  const PAD_UP = [0, 1, 0];
+  digit({ base: [2, -10, -10], dir: [0.03, 0, 1], palmar: PAD_UP, lengths: [40, 24, 19], bends: [0.05, 1.55, 0.1], r0: 8.6, rTip: 7.0 });
+  digit({ base: [-15, -10.5, -14], dir: [0, 0, 1], palmar: PAD_UP, lengths: [44, 27, 20], bends: [0.05, 1.55, 0.1], r0: 9.0, rTip: 7.3 });
+  digit({ base: [-31, -10.5, -14], dir: [-0.03, 0, 1], palmar: PAD_UP, lengths: [41, 26, 19], bends: [0.35, 1.6, 1.0], r0: 8.6, rTip: 7.0 });
+  digit({ base: [-46, -11, -17], dir: [-0.08, 0, 1], palmar: PAD_UP, lengths: [33, 20, 17], bends: [0.4, 1.6, 1.0], r0: 7.6, rTip: 6.2 });
+  // palm: a soft pillow behind and under the back of the case
+  const pillow = (ex) => {
+    const g = new THREE.SphereGeometry(1, 64, 40), at = g.attributes.position;
+    for (let i = 0; i < at.count; i++) {
+      const f = (v) => Math.sign(v) * Math.abs(v) ** ex;
+      at.setXYZ(i, f(at.getX(i)), at.getY(i), f(at.getZ(i)));
     }
     g.computeVertexNormals();
     return g;
   };
   const palm = putH(new THREE.Mesh(pillow(0.55), skin));
-  palm.scale.set(33, 11, 37);
-  palm.position.set(-16, -13, -15);
-  palm.rotation.y = PALM_YAW;
-  // thumb pad: a long soft mound running along the base of the thumb
+  palm.scale.set(33, 11, 36);
+  palm.position.set(-21, -14, -45);
+  // thumb: a chain of tapered bones from the base of the palm, up the near
+  // side of the case and over onto the top, nail facing up
+  const TH = [[8, -8, -54], [8, 15, -33], [5, 38.5, -29], [3, 42, -12]].map((q) => new THREE.Vector3(...q));
+  const thR = [11, 9.4, 8.2, 7.2];
+  for (let k = 0; k < 3; k++) segH(TH[k], TH[k + 1], thR[k], thR[k + 1]);
+  TH.forEach((q, k) => ballH(q, thR[k]));
+  nail(TH[2].toArray(), TH[3].toArray(), thR[3], [0, 1, -0.3]);
+  // thumb pad: a long mound along the base of the thumb, merging with the palm
   const thenar = putH(new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), skin));
-  thenar.position.copy(new THREE.Vector3(...TH_BASE).addScaledVector(TH_DIR, 2)).add(new THREE.Vector3(2, -3, 4));
-  thenar.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), TH_DIR);
-  thenar.scale.set(24, 12, 13);
-  // heel of the hand on the little-finger side
-  const hypo = putH(new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), skin));
-  hypo.position.set(-42, -15, -40);
-  hypo.scale.set(13, 11, 20);
-  hypo.rotation.y = PALM_YAW;
-  // wrist and forearm, going back and to the left
-  const WR = [-34, -18, -50];
-  const fdir = new THREE.Vector3(-0.45, -0.3, -0.84).normalize();
-  const EL = new THREE.Vector3(...WR).addScaledVector(fdir, 230);
-  // The forearm is one smooth turned shape. It starts buried inside the palm
-  // (so no end cap shows), is narrowest just past the wrist, and widens
-  // toward the elbow.
+  thenar.position.set(4, -8, -48);
+  thenar.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), TH[1].clone().sub(TH[0]).normalize());
+  thenar.scale.set(22, 12, 13);
+  // forearm: one smooth turned shape starting inside the palm, narrowest
+  // just past the wrist, widening toward the elbow, going back and down
+  const fdir = new THREE.Vector3(-0.1, -0.3, -0.95).normalize();
+  const WR = new THREE.Vector3(-21, -17, -84);
   {
-    const start = new THREE.Vector3(...WR).addScaledVector(fdir, -20);
+    const start = WR.clone().addScaledVector(fdir, -20);
     const L = 250, prof = [];
     const rAt = (y) => {
-      if (y < 20) return 13 + 4.5 * Math.sin((y / 20) * Math.PI / 2);   // inside the palm -> wrist
-      if (y < 45) return 17.5 - 0.5 * Math.sin(((y - 20) / 25) * Math.PI); // the wrist itself
+      if (y < 20) return 13 + 4.5 * Math.sin((y / 20) * Math.PI / 2);
+      if (y < 45) return 17.5 - 0.5 * Math.sin(((y - 20) / 25) * Math.PI);
       const t = (y - 45) / (L - 45);
       return 17.5 + 11.5 * (t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t)) ** 0.8;
     };
     prof.push(new THREE.Vector2(0, -6));
-    for (let i = 0; i <= 6; i++) { const a = (i / 6) * Math.PI / 2; prof.push(new THREE.Vector2(13 * Math.sin(a), -6 + 6 * (1 - Math.cos(a)))); }
+    for (let i = 0; i <= 6; i++) { const ang = (i / 6) * Math.PI / 2; prof.push(new THREE.Vector2(13 * Math.sin(ang), -6 + 6 * (1 - Math.cos(ang)))); }
     for (let y = 1; y <= L; y += 2) prof.push(new THREE.Vector2(rAt(y), y));
     const arm = putH(new THREE.Mesh(new THREE.LatheGeometry(prof, 64), skin));
     arm.position.copy(start);
     arm.quaternion.setFromUnitVectors(UP, fdir);
   }
-  const s0 = new THREE.Vector3(...WR).addScaledVector(fdir, 70), s1 = new THREE.Vector3(...WR).addScaledVector(fdir, 260);
+  const s0 = WR.clone().addScaledVector(fdir, 70), s1 = WR.clone().addScaledVector(fdir, 260);
   limb(s0.toArray(), s1.toArray(), 34, 37, sleeveMat);
 
 
@@ -647,8 +642,8 @@ p { margin: 0; max-width: 65ch; }
       return { target, pos: target.clone().add(new THREE.Vector3(210, 190, 170)) };
     }
     const lifted = handOn ? LIFT : 0;
-    const target = new THREE.Vector3(handOn ? -8 : 0, 17 + lifted + (handOn ? 4 : 0), handOn ? 0 : 0);
-    const offset = handOn ? new THREE.Vector3(150, 150, -165) : new THREE.Vector3(100, 62, 112);
+    const target = new THREE.Vector3(handOn ? -6 : 0, 17 + lifted + (handOn ? 2 : 0), handOn ? -10 : 0);
+    const offset = handOn ? new THREE.Vector3(150, 135, 125) : new THREE.Vector3(100, 62, 112);
     return { target, pos: target.clone().add(offset) };
   }
   function resetView() { const h = home(); camera.position.copy(h.pos); controls.target.copy(h.target); }
