@@ -547,7 +547,25 @@ p { margin: 0; max-width: 65ch; }
   const WR = [-34, -18, -50];
   const fdir = new THREE.Vector3(-0.45, -0.3, -0.84).normalize();
   const EL = new THREE.Vector3(...WR).addScaledVector(fdir, 230);
-  limb(WR, EL.toArray(), 19, 29, skin);
+  // The forearm is one smooth turned shape. It starts buried inside the palm
+  // (so no end cap shows), is narrowest just past the wrist, and widens
+  // toward the elbow.
+  {
+    const start = new THREE.Vector3(...WR).addScaledVector(fdir, -20);
+    const L = 250, prof = [];
+    const rAt = (y) => {
+      if (y < 20) return 13 + 4.5 * Math.sin((y / 20) * Math.PI / 2);   // inside the palm -> wrist
+      if (y < 45) return 17.5 - 0.5 * Math.sin(((y - 20) / 25) * Math.PI); // the wrist itself
+      const t = (y - 45) / (L - 45);
+      return 17.5 + 11.5 * (t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t)) ** 0.8;
+    };
+    prof.push(new THREE.Vector2(0, -6));
+    for (let i = 0; i <= 6; i++) { const a = (i / 6) * Math.PI / 2; prof.push(new THREE.Vector2(13 * Math.sin(a), -6 + 6 * (1 - Math.cos(a)))); }
+    for (let y = 1; y <= L; y += 2) prof.push(new THREE.Vector2(rAt(y), y));
+    const arm = putH(new THREE.Mesh(new THREE.LatheGeometry(prof, 64), skin));
+    arm.position.copy(start);
+    arm.quaternion.setFromUnitVectors(UP, fdir);
+  }
   const s0 = new THREE.Vector3(...WR).addScaledVector(fdir, 70), s1 = new THREE.Vector3(...WR).addScaledVector(fdir, 260);
   limb(s0.toArray(), s1.toArray(), 34, 37, sleeveMat);
 
