@@ -11,7 +11,8 @@ A printable case for the no-solder flashlight scanner (see `docs/flashlight-scan
 
 Sliced in Bambu Studio for an A1 (0.4 mm nozzle, 0.20 mm Standard, Bambu PLA Basic): about 7 h 45 min
 and 18.5 m of filament (about 55 g) for all three together, with no supports. The body is 183 mm tall
-standing, so the printer needs at least that much height.
+standing, so the printer needs at least that much height. (Those figures were measured before the
+flat floor inside the head was added, which uses about 2 g more.)
 
 **Not printed yet.** Print the bezel and the tail cap first. They take minutes, and they check the two
 press fits before you spend hours on the body.
@@ -45,4 +46,7 @@ Open `flashlight-case.scad` in OpenSCAD and press F5 to see all three parts toge
 - **Neck:** the power bank's USB plug and the spare cable.
 - **Handle:** the power bank. Pull the tail cap to slide it out for charging.
 - **Flat underneath the head:** stops the scanner rolling off a table, and marks which way is down.
+  Inside, the head has a matching flat floor about 18 mm wide, just wider than the XIAO board, so the
+  board sits flat on it. The bezel's plug has a flat on its underside to match, so it only goes in
+  one way up.
 - **Notch on the bezel's rim:** goes at the top, so it can be fitted the right way up by touch.

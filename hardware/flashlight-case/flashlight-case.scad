@@ -49,6 +49,9 @@ grille_z  = 22;   // grille centre, from the front rim (over the buzzer)
 button_z  = 50;   // switch opening centre, from the front rim (top of the head, just ahead of the neck)
 
 head_id   = head_od - 2 * wall;
+// The flat underneath would leave the bottom wall paper-thin, so the inside
+// gets a flat floor a full wall thick. Its top is where the board sits.
+floor_y   = -head_od / 2 + flat_depth + wall;   // about 18 mm wide at the top
 handle_id = bank_d + 2 * fit;
 
 $fn = 96;
@@ -89,6 +92,14 @@ module body() {
       hull() for (s = [-1, 1])
         translate([s * (switch_w - switch_l) / 2, 0, 0]) cylinder(d = switch_l, h = handle_od, $fn = 48);
   }
+  // flat floor inside the head and the start of the neck
+  intersection() {
+    union() {
+      cylinder(d = head_id + 0.02, h = head_len);
+      translate([0, 0, head_len]) cylinder(d1 = head_id + 0.02, d2 = handle_id, h = neck_len);
+    }
+    translate([-head_od, -head_od, -0.01]) cube([2 * head_od, head_od + floor_y, head_len + neck_len]);
+  }
 }
 
 // Bezel: a plug that presses into the front of the head. A pocket on the
@@ -106,6 +117,8 @@ module bezel() {
     translate([-(luna_w + fit) / 2, -(luna_h + fit) / 2, 1.2]) cube([luna_w + fit, luna_h + fit, 20]);
     // match the flat under the head
     translate([-head_od, -head_od / 2 - 50 + flat_depth, -1]) cube([2 * head_od, 50, 20]);
+    // the plug's underside matches the flat floor inside the head
+    translate([-head_od, floor_y + fit / 2 - 50, 2]) cube([2 * head_od, 50, bezel_plug + 1]);
     // a notch at the top edge of the flange, so you can feel which way up it goes in
     translate([0, head_od / 2 - 1.2, -1]) cylinder(d = 3, h = 2.5, $fn = 24);
   }
